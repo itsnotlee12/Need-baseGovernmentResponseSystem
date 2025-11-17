@@ -259,7 +259,7 @@
     </div>
 </div>
 
-<!-- Schedule Appointment Modal -->
+<!-- Schedule Appointment Modal - UPDATED FOR ALL HEALTH SERVICES -->
 <div id="scheduleModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="bg-gradient-to-r from-[#33272a] to-[#594a4e] text-white p-6 rounded-t-2xl">
@@ -269,8 +269,8 @@
                         <i data-lucide="calendar-plus" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold">Schedule Mental Health Appointment</h2>
-                        <p class="text-white/80 text-sm mt-1">Assign professional and set appointment time</p>
+                        <h2 class="text-2xl font-bold">Schedule Appointment</h2>
+                        <p class="text-white/80 text-sm mt-1" id="scheduleSubtitle">Assign professional and set appointment time</p>
                     </div>
                 </div>
                 <button onclick="closeScheduleModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
@@ -281,8 +281,9 @@
         
         <form onsubmit="scheduleAppointment(event)" class="p-6">
             <input type="hidden" id="scheduleRequestId">
+            <input type="hidden" id="scheduleNeedType">
             
-            <!-- Citizen Info -->
+            <!-- Patient Info -->
             <div class="mb-6 p-4 bg-[#faeee7] rounded-lg border border-[#33272a]/10">
                 <h3 class="font-bold text-[#33272a] mb-2">Patient Information</h3>
                 <p class="text-sm text-[#594a4e]">
@@ -291,17 +292,21 @@
                 <p class="text-sm text-[#594a4e] mt-1">
                     <span class="font-semibold">Email:</span> <span id="scheduleCitizenEmail"></span>
                 </p>
+                <p class="text-sm text-[#594a4e] mt-1">
+                    <span class="font-semibold">Service Needed:</span> <span id="scheduleServiceType" class="font-bold"></span>
+                </p>
             </div>
             
             <!-- Professional Selection -->
             <div class="mb-6">
                 <label class="block text-[#33272a] font-bold mb-2">
-                    Select Mental Health Professional *
+                    Select Health Professional *
                 </label>
                 <select id="professionalSelect" required
                     class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                     <option value="">Loading professionals...</option>
                 </select>
+                <p class="text-xs text-[#594a4e] mt-1" id="professionalHelpText"></p>
             </div>
             
             <!-- Date and Time -->
@@ -329,11 +334,7 @@
                 </label>
                 <select id="appointmentType" required
                     class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
-                    <option value="initial-consultation">Initial Consultation</option>
-                    <option value="follow-up">Follow-up Session</option>
-                    <option value="crisis-intervention">Crisis Intervention</option>
-                    <option value="counseling">Counseling Session</option>
-                    <option value="assessment">Psychological Assessment</option>
+                    <!-- Options will be populated dynamically based on need type -->
                 </select>
             </div>
             
@@ -476,6 +477,9 @@
             .map(v => `<span class="px-2.5 py-1 bg-[#ff8ba7]/10 text-[#33272a] rounded-md text-xs font-semibold border border-[#ff8ba7]/30">${v}</span>`)
             .join(' ');
         
+        // Check if this need type requires appointment
+        const needsAppointment = ['medical', 'dental-services', 'immunization', 'laboratory', 'mental-health'].includes(request.needType);
+        
         return `
             <div class="bg-white border-l-4 ${request.severity === 'critical' ? 'border-[#ff8ba7]' : 'border-[#33272a]'} rounded-xl p-6 hover:shadow-xl transition-all shadow-sm ${request.severity === 'critical' ? 'ring-2 ring-[#ff8ba7]/20' : ''}">
                 <div class="flex justify-between items-start mb-5">
@@ -534,11 +538,11 @@
                         </button>
                     ` : ''}
                     ${request.status === 'in-progress' ? `
-                        ${request.needType === 'mental-health' ? `
+                        ${needsAppointment ? `
                             ${!request.referralStatus || request.referralStatus === 'none' ? `
-                                <button onclick="openScheduleModal('${request.id}', '${request.citizenName}', '${request.email}')"
+                                <button onclick="openScheduleModal('${request.id}', '${request.citizenName}', '${request.email}', '${request.needType}')"
                                     class="px-6 py-3 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-bold shadow-md">
-                                    🧠 Schedule Appointment
+                                    📅 Schedule Appointment
                                 </button>
                             ` : request.referralStatus === 'scheduling' ? `
                                 <button onclick="markComplete('${request.id}')"
@@ -551,7 +555,7 @@
                                 </div>
                             ` : request.referralStatus === 'confirmed' ? `
                                 <div class="px-6 py-3 bg-green-100 text-green-700 rounded-lg font-bold border-2 border-green-300">
-                                    ✅ Confirmed by Professional - Ready to Close
+                                    ✅ Confirmed by Professional
                                 </div>
                                 <button onclick="updateStatus('${request.id}', 'completed')"
                                     class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-bold shadow-md">
@@ -705,30 +709,97 @@
     // Refresh every 30 seconds
     setInterval(loadRequests, 30000);
     
+    // Configuration for appointment types by need type
+    const appointmentTypesByNeed = {
+        'medical': [
+            { value: 'consultation', label: 'General Consultation' },
+            { value: 'medical-checkup', label: 'Medical Check-up' },
+            { value: 'follow-up', label: 'Follow-up Visit' },
+            { value: 'treatment', label: 'Treatment' }
+        ],
+        'dental-services': [
+            { value: 'consultation', label: 'Dental Consultation' },
+            { value: 'dental-checkup', label: 'Dental Check-up' },
+            { value: 'treatment', label: 'Dental Treatment' },
+            { value: 'procedure', label: 'Dental Procedure' }
+        ],
+        'immunization': [
+            { value: 'consultation', label: 'Vaccination Consultation' },
+            { value: 'treatment', label: 'Vaccine Administration' },
+            { value: 'follow-up', label: 'Follow-up Dose' }
+        ],
+        'laboratory': [
+            { value: 'consultation', label: 'Lab Test Consultation' },
+            { value: 'procedure', label: 'Laboratory Procedure' },
+            { value: 'follow-up', label: 'Results Follow-up' }
+        ],
+        'mental-health': [
+            { value: 'consultation', label: 'Initial Consultation' },
+            { value: 'counseling', label: 'Counseling Session' },
+            { value: 'therapy', label: 'Therapy Session' },
+            { value: 'follow-up', label: 'Follow-up Session' }
+        ]
+    };
+    
+    // Service display names
+    const serviceDisplayNames = {
+        'medical': 'Medical Services',
+        'dental-services': 'Dental Services',
+        'immunization': 'Immunization Services',
+        'laboratory': 'Laboratory & Diagnostics',
+        'mental-health': 'Mental Health Services'
+    };
+    
     // Schedule Modal Functions
     let professionals = [];
     
-    async function loadProfessionals() {
+    async function loadProfessionals(needType) {
         try {
-            const response = await fetch('/api/professionals/list');
-            professionals = await response.json();
+            const response = await fetch(`/api/professionals/list?need_type=${needType}`);
+            const data = await response.json();
             
-            const select = document.getElementById('professionalSelect');
-            select.innerHTML = '<option value="">-- Select a professional --</option>' +
-                professionals.map(prof => `
-                    <option value="${prof.professional_id}">
-                        ${prof.name} - ${prof.specialization} (Rating: ${prof.rating}/5.0)
-                    </option>
-                `).join('');
+            if (data.status === 'success' || data.success) {
+                professionals = data.professionals || [];
+                
+                const select = document.getElementById('professionalSelect');
+                if (professionals.length === 0) {
+                    select.innerHTML = '<option value="">No professionals available for this service</option>';
+                    document.getElementById('professionalHelpText').textContent = 'Please contact administration to add professionals for this service.';
+                } else {
+                    select.innerHTML = '<option value="">-- Select a professional --</option>' +
+                        professionals.map(prof => `
+                            <option value="${prof.professional_id}">
+                                ${prof.full_name} - ${prof.specialization} (${prof.years_of_experience} years exp, Rating: ${prof.rating}/5.0)
+                            </option>
+                        `).join('');
+                    document.getElementById('professionalHelpText').textContent = `${professionals.length} professional(s) available`;
+                }
+            } else {
+                console.error('Error loading professionals:', data);
+            }
         } catch (error) {
             console.error('Error loading professionals:', error);
+            document.getElementById('professionalSelect').innerHTML = '<option value="">Error loading professionals</option>';
         }
     }
     
-    function openScheduleModal(requestId, citizenName, citizenEmail) {
+    function openScheduleModal(requestId, citizenName, citizenEmail, needType) {
         document.getElementById('scheduleRequestId').value = requestId;
+        document.getElementById('scheduleNeedType').value = needType;
         document.getElementById('scheduleCitizenName').textContent = citizenName;
         document.getElementById('scheduleCitizenEmail').textContent = citizenEmail;
+        
+        // Update subtitle and service type
+        const serviceName = serviceDisplayNames[needType] || needType;
+        document.getElementById('scheduleSubtitle').textContent = `Schedule ${serviceName} appointment`;
+        document.getElementById('scheduleServiceType').textContent = serviceName;
+        
+        // Populate appointment types based on need type
+        const appointmentTypeSelect = document.getElementById('appointmentType');
+        const types = appointmentTypesByNeed[needType] || [{ value: 'consultation', label: 'Consultation' }];
+        appointmentTypeSelect.innerHTML = types.map(type => 
+            `<option value="${type.value}">${type.label}</option>`
+        ).join('');
         
         // Set minimum date to today
         const today = new Date().toISOString().split('T')[0];
@@ -739,20 +810,21 @@
         
         lucide.createIcons();
         
-        if (professionals.length === 0) {
-            loadProfessionals();
-        }
+        // Load professionals for this need type
+        loadProfessionals(needType);
     }
     
     function closeScheduleModal() {
         document.getElementById('scheduleModal').classList.add('hidden');
         document.getElementById('scheduleModal').classList.remove('flex');
+        document.getElementById('professionalSelect').innerHTML = '<option value="">Loading professionals...</option>';
     }
     
     async function scheduleAppointment(event) {
         event.preventDefault();
         
         const requestId = document.getElementById('scheduleRequestId').value;
+        const needType = document.getElementById('scheduleNeedType').value;
         const professionalId = document.getElementById('professionalSelect').value;
         const appointmentDate = document.getElementById('appointmentDate').value;
         const appointmentTime = document.getElementById('appointmentTime').value;
@@ -760,9 +832,11 @@
         const notes = document.getElementById('appointmentNotes').value;
         
         if (!professionalId) {
-            alert('Please select a mental health professional');
+            alert('Please select a health professional');
             return;
         }
+        
+        const serviceName = serviceDisplayNames[needType] || needType;
         
         try {
             const response = await fetch('/api/staff/schedule_appointment', {
@@ -783,7 +857,7 @@
             const data = await response.json();
             
             if (data.success) {
-                alert('Appointment scheduled successfully! The professional has been notified. Click "Mark Complete" to notify the citizen.');
+                alert(`${serviceName} appointment scheduled successfully! The professional has been notified. Click "Mark Complete" to notify the citizen.`);
                 closeScheduleModal();
                 loadRequests();
             } else {
