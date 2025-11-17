@@ -60,12 +60,13 @@ CREATE TABLE professionals (
     phone VARCHAR(50),
     profession_type VARCHAR(100) NOT NULL, -- e.g., 'medical-doctor', 'dentist', 'psychiatrist'
     specialization VARCHAR(150),             -- e.g., 'General Medicine', 'Orthodontics', 'Clinical Psychology'
-    department VARCHAR(150),                 -- e.g., 'medical', 'dental', 'mental-health'
+    department VARCHAR(150), 
+    official_id VARCHAR(50) UNIQUE,
     license_number VARCHAR(50) UNIQUE,
     qualifications TEXT,
     years_of_experience INTEGER DEFAULT 0,
     status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on-leave')),
-    availability_schedule JSONB, -- {"monday": ["09:00-12:00", "13:00-17:00"], ...}
+    availability_schedule JSONB, -- {"monday": ["09:00-12:00", "1:00-5:00"], ...}
     max_appointments_per_day INTEGER DEFAULT 8,
     joined_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
@@ -356,13 +357,36 @@ VALUES
 -- Sample staff
 INSERT INTO staff (staff_id, full_name, email, password_hash, phone, official_id, department, role, employee_id, status, joined_date, requests_handled, permissions, added_by, added_date)
 VALUES
-('GOV-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
+('ADMIN-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
 
--- Sample professionals (medical and dental)
-INSERT INTO professionals (professional_id, full_name, email, password_hash, phone, profession_type, specialization, department, license_number, qualifications, years_of_experience, status)
+-- Sample professionals (medical, dental, mental health)
+INSERT INTO professionals 
+(professional_id, full_name, email, password_hash, phone, profession_type, official_id, specialization, department, license_number, qualifications, years_of_experience, status)
 VALUES
-('PRO-0001', 'Dr. Alice Santos', 'alice.santos@cityhealth.gov', '$2b$12$examplehash', '+63-912-000001', 'medical-doctor', 'general-medicine', 'medical', 'LIC-1001', 'MD', 8, 'active'),
-('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002', 'dentist', 'general-dentistry', 'dental-services', 'LIC-2001', 'DDS', 5, 'active');
+('PRO-0001', 'Dr. Alice Santos', 'alice.santos@cityhealth.gov', '$2b$12$examplehash', '+63-912-000001', 'medical-doctor', 'GOV-1234', 'General Medicine', 'medical', 'LIC-1001', 'MD', 8, 'active'),
+('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002', 'dentist', 'GOV-1235', 'General Dentistry', 'dental-services', 'LIC-2001', 'DDS', 5, 'active'),
+('PRO-0003', 'Dr. Maria Angela Cruz', 'maria.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000003', 'psychiatrist', 'GOV-1236', 'Clinical Psychology', 'mental-health', 'LIC-3001', 'MD, Psychiatry', 7, 'active');
+
+-- Sample Requests
+INSERT INTO requests
+(request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
+VALUES
+('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
+
+-- Sample appointment
+INSERT INTO appointments
+(appointment_id, request_id, citizen_email, citizen_name, citizen_phone, professional_id, scheduled_by_staff_id, appointment_date, appointment_time, duration_minutes, appointment_type, notes, status, created_at)
+VALUES
+('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
+
+-- Sample Notification
+INSERT INTO notifications
+(recipient_email, recipient_type, notification_type, title, message, related_request_id, related_appointment_id, is_read, created_at)
+VALUES
+('john@example.com', 'citizen', 'appointment_scheduled', 'Your Counseling Appointment is Confirmed', 
+'Hello John Doe, your counseling appointment with Dr. Maria Angela Cruz is confirmed for 2025-11-20 at 10:00 AM.', 
+'REQ-0001', 'APP-0001', FALSE, CURRENT_TIMESTAMP);
+
 
 -- ============================================
 -- 12) OPTIONAL: initialize referral_status default for existing rows (if any)
@@ -379,4 +403,5 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM professionals) AS total_professionals,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
+
 
