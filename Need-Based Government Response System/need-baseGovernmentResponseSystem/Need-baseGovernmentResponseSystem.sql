@@ -165,11 +165,6 @@ CREATE TABLE appointments (
     FOREIGN KEY (scheduled_by_staff_id) REFERENCES staff(staff_id) ON DELETE SET NULL
 );
 
--- Link requests to appointments
-ALTER TABLE requests
-    ADD CONSTRAINT fk_requests_appointment
-    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL;
-
 -- ============================================
 -- 6) NOTIFICATIONS TABLE
 -- ============================================
@@ -318,18 +313,18 @@ FROM requests;
 -- ============================================
 -- 11) SAMPLE DATA
 -- ============================================
--- Sample citizens
+-- Sample citizens password kay default123
 INSERT INTO citizens (email, password_hash, full_name, phone)
 VALUES
 ('john@example.com', '$2b$12$examplehashforpassword12345678abcdefg', 'John Doe', '+1-555-0001'),
 ('sarah@example.com', '$2b$12$examplehashforpassword12345678abcdefg', 'Sarah Smith', '+1-555-0002');
 
--- Sample staff
+-- Sample staff password kay default123
 INSERT INTO staff (staff_id, full_name, email, password_hash, phone, official_id, department, role, employee_id, status, joined_date, requests_handled, permissions, added_by, added_date)
 VALUES
 ('ADMIN-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
 
--- Sample professionals
+-- Sample professionals password kay default123
 INSERT INTO professionals 
 (professional_id, full_name, email, password_hash, phone, profession_type, official_id, specialization, department, license_number, qualifications, years_of_experience, status)
 VALUES
@@ -337,17 +332,17 @@ VALUES
 ('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002', 'dentist', 'GOV-1235', 'General Dentistry', 'dental-services', 'LIC-2001', 'DDS', 5, 'active'),
 ('PRO-0003', 'Dr. Maria Angela Cruz', 'maria.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000003', 'psychiatrist', 'GOV-1236', 'Clinical Psychology', 'mental-health', 'LIC-3001', 'MD, Psychiatry', 7, 'active');
 
--- Sample appointment
-INSERT INTO appointments
-(appointment_id, request_id, citizen_email, citizen_name, citizen_phone, professional_id, scheduled_by_staff_id, appointment_date, appointment_time, duration_minutes, appointment_type, notes, status, created_at)
-VALUES
-('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
-
 -- Sample requests
 INSERT INTO requests
 (request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
 VALUES
 ('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
+
+-- Sample appointment
+INSERT INTO appointments
+(appointment_id, request_id, citizen_email, citizen_name, citizen_phone, professional_id, scheduled_by_staff_id, appointment_date, appointment_time, duration_minutes, appointment_type, notes, status, created_at)
+VALUES
+('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
 
 -- Sample notification
 INSERT INTO notifications
@@ -357,7 +352,7 @@ VALUES
 'Hello John Doe, your counseling appointment with Dr. Maria Angela Cruz is confirmed for 2025-11-20 at 10:00 AM.', 
 'REQ-0001', 'APP-0001', FALSE, CURRENT_TIMESTAMP);
 
--- (12) Optional: initialize referral_status default for existing rows
+-- 12) Optional: initialize referral_status default for existing rows
 UPDATE requests SET referral_status = 'none' WHERE referral_status IS NULL;
 
 -- ============================================
