@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime
+from psycopg2.extras import RealDictCursor
 import psycopg2
 import json
 import bcrypt
@@ -47,62 +48,69 @@ def get_db_connection():
 # ============================================
 
 def load_requests_from_db():
-    """Load all requests from database into memory"""
+    """Load all requests from database into memory using DictCursor"""
     conn = get_db_connection()
     if not conn:
         print("ERROR: No database connection in load_requests_from_db")
         return []
-    
+
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
             SELECT request_id, citizen_name, email, phone, location_address,
-                   need_type, severity, people_affected, description,
-                   vulnerability_group, special_circumstances, is_student,
-                   educational_needs, has_evidence, status, submitted_at,
+                   need_type, specification, severity, people_affected, description,
+                   vulnerability_group, special_circumstances,
+                   has_evidence, status, submitted_at,
                    updated_at, completed_at, priority_score, 
                    estimated_response_time, assigned_to, appointment_id, referral_status
             FROM requests
             ORDER BY submitted_at DESC
         """)
-        
+
         rows = cur.fetchall()
         print(f"DEBUG: Loaded {len(rows)} requests from database")
         requests_list = []
-        
+
         for row in rows:
-            # Convert location back to object format for frontend compatibility
             location_obj = {
-                'address': row[4] if row[4] else '',
-                'coordinates': {'lat': 0, 'lng': 0}  # Default coordinates
+                'address': row['location_address'] if row['location_address'] else '',
+                'coordinates': {'lat': 0, 'lng': 0}
             }
-            
+
+            vulnerability_group = row['vulnerability_group']
+            if isinstance(vulnerability_group, str):
+                try:
+                    vulnerability_group = json.loads(vulnerability_group)
+                except:
+                    vulnerability_group = ['none']
+            elif vulnerability_group is None:
+                vulnerability_group = ['none']
+
             requests_list.append({
-                'id': row[0],
-                'citizenName': row[1],
-                'email': row[2],
-                'phone': row[3],
-                'location': location_obj,  # Return as object for frontend
-                'needType': row[5],
-                'severity': row[6],
-                'peopleAffected': row[7],
-                'description': row[8],
-                'vulnerabilityGroup': row[9] if row[9] else [],
-                'specialCircumstances': row[10],
-                'isStudent': row[11],
-                'studentInfo': row[12] if row[12] else {},
-                'hasEvidence': row[13],
-                'status': row[14],
-                'submittedAt': row[15].isoformat() if row[15] else None,
-                'updatedAt': row[16].isoformat() if row[16] else None,
-                'completedAt': row[17].isoformat() if row[17] else None,
-                'priorityScore': row[18],
-                'estimatedResponse': row[19],
-                'assignedTo': row[20],
-                'appointmentId': row[21],
-                'referralStatus': row[22] if row[22] else 'none'
+                'id': row['request_id'],
+                'citizenName': row['citizen_name'],
+                'email': row['email'],
+                'phone': row['phone'],
+                'location': location_obj,
+                'needType': row['need_type'],
+                'specification': row['specification'],
+                'severity': row['severity'],
+                'peopleAffected': row['people_affected'],
+                'description': row['description'],
+                'vulnerabilityGroup': vulnerability_group,
+                'specialCircumstances': row['special_circumstances'],
+                'hasEvidence': row['has_evidence'],
+                'status': row['status'],
+                'submittedAt': row['submitted_at'].isoformat() if row['submitted_at'] else None,
+                'updatedAt': row['updated_at'].isoformat() if row['updated_at'] else None,
+                'completedAt': row['completed_at'].isoformat() if row['completed_at'] else None,
+                'priorityScore': row['priority_score'],
+                'estimatedResponse': row['estimated_response_time'],
+                'assignedTo': row['assigned_to'],
+                'appointmentId': row['appointment_id'],
+                'referralStatus': row['referral_status'] if row['referral_status'] else 'none'
             })
-        
+
         cur.close()
         conn.close()
         print(f"DEBUG: Returning {len(requests_list)} requests")
@@ -132,25 +140,24 @@ def save_request_to_db(request_data):
         cur.execute("""
             INSERT INTO requests (
                 request_id, citizen_name, email, phone, location_address,
-                need_type, severity, people_affected, description,
-                vulnerability_group, special_circumstances, is_student,
-                educational_needs, has_evidence, status, priority_score,
+                need_type, specification, severity, people_affected, description,
+                vulnerability_group, special_circumstances,
+                has_evidence, status, priority_score,
                 estimated_response_time, submitted_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             request_data['id'],
             request_data['citizenName'],
             request_data['email'],
             request_data.get('phone'),
-            location_address,  # Fixed: extract address from location object
+            location_address,
             request_data['needType'],
+            request_data.get('specification'),  # NEW: Add specification
             request_data['severity'],
             request_data.get('peopleAffected', 1),
             request_data['description'],
             json.dumps(request_data.get('vulnerabilityGroup', [])),
             request_data.get('specialCircumstances'),
-            request_data.get('isStudent', False),
-            json.dumps(request_data.get('studentInfo', {})),
             request_data.get('hasEvidence', False),
             request_data.get('status', 'pending'),
             request_data.get('priorityScore', 0),
@@ -165,7 +172,7 @@ def save_request_to_db(request_data):
     except Exception as e:
         print(f"Error saving request to database: {e}")
         import traceback
-        traceback.print_exc()  # This will show the exact error
+        traceback.print_exc()
         if conn:
             conn.rollback()
             conn.close()
@@ -286,6 +293,77 @@ def generate_professional_official_id(conn):
         print(f"Error generating professional ID: {e}")
         # Fallback to timestamp-based ID
         return f"GOV-{int(datetime.now().timestamp()) % 10000:04d}"
+# ============================================
+# PROFESSIONAL TYPE MAPPINGS
+# ============================================
+
+def get_profession_type_for_need(need_type):
+    """
+    Map request need_type to professional profession_type
+    
+    Returns:
+        str: profession_type for filtering professionals
+    """
+    mapping = {
+        'medical': 'medical-doctor',
+        'dental-services': 'dentist',
+        'immunization': 'immunization-doctor',
+        'laboratory': 'medical-technologist',
+        'mental-health': 'mental-health-doctor'
+    }
+    return mapping.get(need_type)
+
+def get_need_types_requiring_appointment():
+    """
+    Returns list of need types that require professional appointments
+    """
+    return ['medical', 'dental-services', 'immunization', 'laboratory', 'mental-health']
+
+def get_specialization_options_by_profession():
+    """
+    Returns specialization options for each profession type
+    """
+    return {
+        'medical-doctor': [
+            'General Medicine',
+        ],
+        'dentist': [
+            'General Dentistry',
+        ],
+        'immunization-doctor': [
+            'Immunization & Public Health',
+            'Infectious Disease Prevention',
+            'Vaccine Administration',
+            'Pediatric Immunization'
+        ],
+        'mental-health-doctor': [
+            'Psychiatry',
+            'Clinical Psychology',
+            'Counseling Psychology',
+            'Child Psychology',
+            'Behavioral Therapy'
+        ],
+        'medical-technologist': [
+            'Hematology',
+            'Clinical Chemistry',
+            'Microbiology',
+            'Immunology',
+            'Blood Banking'
+        ]
+    }
+
+def get_profession_display_name(profession_type):
+    """
+    Returns human-readable name for profession type
+    """
+    names = {
+        'medical-doctor': 'Medical Doctor',
+        'dentist': 'Dentist',
+        'immunization-doctor': 'Immunization Doctor',
+        'mental-health-doctor': 'Mental Health Professional',
+        'medical-technologist': 'Medical Technologist'
+    }
+    return names.get(profession_type, profession_type)
 # ============================================
 # ROLE-BASED ACCESS CONTROL
 # ============================================
@@ -1087,8 +1165,9 @@ def api_submit_request():
         'citizenName': data.get('citizenName'),
         'email': data.get('email'),
         'phone': data.get('phone'),
-        'location': location_address,  # Store as string
+        'location': location_address,
         'needType': data.get('needType'),
+        'specification': data.get('specification'),  # NEW: Add specification field
         'severity': data.get('severity'),
         'peopleAffected': data.get('peopleAffected', 1),
         'description': data.get('description'),
@@ -1137,8 +1216,6 @@ def api_submit_request():
     log_audit_action('CREATE', data.get('email'), 
                     f"New {data.get('needType')} request submitted - {data.get('severity')} severity",
                     'REQUEST', request_id)
-    
-    return jsonify({'success': True, 'request': new_request})
     
     return jsonify({'success': True, 'request': new_request})
 
@@ -1786,231 +1863,6 @@ def api_get_system_stats():
             'requestTrends': request_trends
         }
     })
-
-# Initialize with some mock data
-def init_mock_data():
-    """Initialize with sample requests, staff, and test users with bcrypt hashed passwords"""
-    
-    # Initialize test users with bcrypt hashed passwords
-    # Note: In production, users should register with their own passwords
-    # This is only for development/testing purposes
-    test_password_hash = hash_password("password123")
-    
-    # Initialize citizens
-    if 'citizens' not in users_db:
-        users_db['citizens'] = {}
-    
-    if len(users_db['citizens']) == 0:
-        users_db['citizens']['john@example.com'] = {
-            'email': 'john@example.com',
-            'password_hash': test_password_hash,
-            'name': 'John Doe',
-            'phone': '+1-555-0001',
-            'created_at': datetime.now().isoformat(),
-            'is_active': True
-        }
-        users_db['citizens']['sarah@example.com'] = {
-            'email': 'sarah@example.com',
-            'password_hash': test_password_hash,
-            'name': 'Sarah Smith',
-            'phone': '+1-555-0002',
-            'created_at': datetime.now().isoformat(),
-            'is_active': True
-        }
-    
-    # Initialize government users
-    if 'government' not in users_db:
-        users_db['government'] = {}
-    
-    if len(users_db['government']) == 0:
-        users_db['government']['michael.chen@gov.example'] = {
-            'email': 'michael.chen@gov.example',
-            'password_hash': test_password_hash,
-            'name': 'Michael Chen',
-            'department': 'Relief Operations',
-            'created_at': datetime.now().isoformat(),
-            'is_active': True
-        }
-        users_db['government']['emily.rodriguez@gov.example'] = {
-            'email': 'emily.rodriguez@gov.example',
-            'password_hash': test_password_hash,
-            'name': 'Emily Rodriguez',
-            'department': 'Medical Services',
-            'created_at': datetime.now().isoformat(),
-            'is_active': True
-        }
-    
-    # Initialize sample requests
-    if len(requests_db) == 0:
-        sample_requests = [
-            {
-                'id': 'REQ-000001',
-                'citizenName': 'John Doe',
-                'email': 'john@example.com',
-                'phone': '+1-555-0001',
-                'location': {
-                    'address': '123 Main St, Downtown District',
-                    'coordinates': {'lat': 40.7128, 'lng': -74.0060}
-                },
-                'needType': 'medical',
-                'severity': 'critical',
-                'peopleAffected': 3,
-                'description': 'Urgent medical supplies needed for elderly parent',
-                'vulnerabilityGroup': ['elderly', 'disabled'],
-                'specialCircumstances': 'Chronic illness, mobility limited',
-                'isStudent': False,
-                'hasEvidence': True,
-                'status': 'in-progress',
-                'submittedAt': datetime.now().isoformat(),
-                'updatedAt': datetime.now().isoformat(),
-                'verificationCount': 2,
-                'priorityScore': 95,
-                'estimatedResponseTime': 'Within 2 hours',
-                'assignedTo': 'Relief Team 1'
-            },
-            {
-                'id': 'REQ-000002',
-                'citizenName': 'Sarah Smith',
-                'email': 'sarah@example.com',
-                'phone': '+1-555-0002',
-                'location': {
-                    'address': '456 Oak Ave, West District',
-                    'coordinates': {'lat': 40.7228, 'lng': -74.0160}
-                },
-                'needType': 'educational',
-                'severity': 'urgent',
-                'peopleAffected': 1,
-                'description': 'Need laptop for online classes, exam next week',
-                'vulnerabilityGroup': ['student'],
-                'specialCircumstances': '',
-                'isStudent': True,
-                'educationalNeeds': {
-                    'type': 'devices',
-                    'details': 'Engineering student, need computer for CAD software'
-                },
-                'hasEvidence': False,
-                'status': 'pending',
-                'submittedAt': datetime.now().isoformat(),
-                'updatedAt': datetime.now().isoformat(),
-                'verificationCount': 0,
-                'priorityScore': 68,
-                'estimatedResponseTime': 'Within 6 hours'
-            }
-        ]
-        requests_db.extend(sample_requests)
-    
-    # Initialize sample staff data with hashed passwords (COMMENTED OUT - Use database instead)
-    # if len(staff_db) == 0:
-    #     sample_staff = [
-    #         {
-    #             'id': 'ADMIN-0001',
-    #             'fullName': 'Admin User',
-    #             'name': 'Admin User',
-    #             'email': 'admin@gov.example',
-    #             'password_hash': test_password_hash,
-    #             'phone': '+1-555-9999',
-    #             'department': 'Administration',
-    #             'role': 'admin',
-    #             'employeeId': 'ADMIN-001',
-    #             'status': 'active',
-    #             'joinedDate': '2020-01-01T08:00:00',
-    #             'lastLogin': datetime.now().isoformat(),
-    #             'requestsHandled': 0,
-    #             'permissions': ['all']
-    #         },
-    #         {
-    #             'id': 'STAFF-0001',
-    #             'fullName': 'Michael Chen',
-    #             'name': 'Michael Chen',
-    #             'email': 'michael.chen@gov.example',
-    #             'password_hash': test_password_hash,
-    #             'phone': '+1-555-1001',
-    #             'department': 'Relief Operations',
-    #             'role': 'manager',
-    #             'employeeId': 'EMP-2021-001',
-    #             'status': 'active',
-    #             'joinedDate': '2021-03-15T08:00:00',
-    #             'lastLogin': datetime.now().isoformat(),
-    #             'requestsHandled': 142,
-    #             'permissions': ['view_requests', 'update_status', 'assign_teams', 'view_reports']
-    #         },
-    #         {
-    #             'id': 'STAFF-0002',
-    #             'fullName': 'Emily Rodriguez',
-    #             'name': 'Emily Rodriguez',
-    #             'email': 'emily.rodriguez@gov.example',
-    #             'password_hash': test_password_hash,
-    #             'phone': '+1-555-1002',
-    #             'department': 'Medical Services',
-    #             'role': 'officer',
-    #             'employeeId': 'EMP-2022-015',
-    #             'status': 'active',
-    #             'joinedDate': '2022-06-20T08:00:00',
-    #             'lastLogin': datetime.now().isoformat(),
-    #             'requestsHandled': 87,
-    #             'permissions': ['view_requests', 'update_status']
-    #         },
-    #         {
-    #             'id': 'STAFF-0003',
-    #             'fullName': 'David Kumar',
-    #             'name': 'David Kumar',
-    #             'email': 'david.kumar@gov.example',
-    #             'password_hash': test_password_hash,
-    #             'phone': '+1-555-1003',
-    #             'department': 'Educational Support',
-    #             'role': 'officer',
-    #             'employeeId': 'EMP-2022-028',
-    #             'status': 'active',
-    #             'joinedDate': '2022-08-10T08:00:00',
-    #             'lastLogin': datetime.now().isoformat(),
-    #             'requestsHandled': 63,
-    #             'permissions': ['view_requests', 'update_status']
-    #         },
-    #         {
-    #             'id': 'STAFF-0004',
-    #             'fullName': 'Sarah Johnson',
-    #             'email': 'sarah.johnson@gov.example',
-    #             'phone': '+1-555-1004',
-    #             'department': 'Relief Operations',
-    #             'role': 'officer',
-    #             'employeeId': 'EMP-2023-007',
-    #             'status': 'active',
-    #             'joinedDate': '2023-02-01T08:00:00',
-    #             'lastLogin': datetime.now().isoformat(),
-    #             'requestsHandled': 45,
-    #             'permissions': ['view_requests', 'update_status']
-    #         }
-    #     ]
-    #     staff_db.extend(sample_staff)
-    
-    # Initialize sample audit logs
-    if len(audit_logs) == 0:
-        sample_audits = [
-            {
-                'id': 'AUDIT-000001',
-                'timestamp': datetime.now().isoformat(),
-                'action_type': 'LOGIN',
-                'user_email': 'michael.chen@gov.example',
-                'user_role': 'government',
-                'entity_type': None,
-                'entity_id': None,
-                'details': 'Government user logged in',
-                'ip_address': '192.168.1.100'
-            },
-            {
-                'id': 'AUDIT-000002',
-                'timestamp': datetime.now().isoformat(),
-                'action_type': 'STATUS_CHANGE',
-                'user_email': 'michael.chen@gov.example',
-                'user_role': 'government',
-                'entity_type': 'REQUEST',
-                'entity_id': 'REQ-000001',
-                'details': 'Request REQ-000001 status changed from pending to in-progress',
-                'ip_address': '192.168.1.100'
-            }
-        ]
-        audit_logs.extend(sample_audits)
-
 # ============================================
 # MENTAL HEALTH WORKFLOW - PROFESSIONALS
 # ============================================
@@ -2018,17 +1870,14 @@ def init_mock_data():
 @app.route('/professional/dashboard')
 def professional_dashboard():
     """Professional dashboard showing pending and confirmed appointments"""
-    # Check if user is logged in as a professional
     if 'user_email' not in session:
         return redirect(url_for('government_login'))
     
-    # Check if this is a professional user
     if not session.get('is_professional'):
         return redirect(url_for('government_dashboard'))
     
     professional_email = session['user_email']
     
-    # Get professional information from database
     conn = get_db_connection()
     if not conn:
         return "Database connection error", 500
@@ -2038,7 +1887,7 @@ def professional_dashboard():
         
         # Get professional details
         cur.execute("""
-            SELECT professional_id, full_name, specialization, phone, total_appointments
+            SELECT professional_id, full_name, profession_type, specialization, phone, total_appointments
             FROM professionals
             WHERE email = %s
         """, (professional_email,))
@@ -2049,6 +1898,11 @@ def professional_dashboard():
         
         professional_id = professional[0]
         professional_name = professional[1]
+        profession_type = professional[2]
+        specialization = professional[3]
+        
+        # Get profession display name
+        profession_display = get_profession_display_name(profession_type)
         
         # Get appointments for this professional
         cur.execute("""
@@ -2090,6 +1944,8 @@ def professional_dashboard():
         return render_template('professional_dashboard.html',
                              professional_name=professional_name,
                              professional_email=professional_email,
+                             profession_type=profession_display,
+                             specialization=specialization,
                              appointments=appointments,
                              unread_notifications=unread_count)
     except Exception as e:
@@ -2195,7 +2051,7 @@ Please arrive 10 minutes early. If you need to reschedule, please contact us at 
 
 @app.route('/api/staff/schedule_appointment', methods=['POST'])
 def schedule_appointment():
-    """Staff schedules a mental health appointment for a student"""
+    """Staff schedules an appointment for any health service that requires professional"""
     print(f"Schedule appointment called. Session: {dict(session)}")
     
     if 'user_email' not in session:
@@ -2212,6 +2068,7 @@ def schedule_appointment():
     professional_id = data.get('professional_id')
     appointment_date = data.get('appointment_date')
     appointment_time = data.get('appointment_time')
+    appointment_type = data.get('appointment_type', 'consultation')
     notes = data.get('notes', '')
     
     print(f"Scheduling appointment for request_id: {request_id}")
@@ -2225,7 +2082,7 @@ def schedule_appointment():
         
         # Get request details
         cur.execute("""
-            SELECT citizen_name, email, phone
+            SELECT citizen_name, email, phone, need_type
             FROM requests
             WHERE request_id = %s
         """, (request_id,))
@@ -2237,7 +2094,11 @@ def schedule_appointment():
             conn.close()
             return jsonify({'success': False, 'error': 'Request not found'}), 404
         
-        citizen_name, citizen_email, citizen_phone = request_data
+        citizen_name, citizen_email, citizen_phone, need_type = request_data
+        
+        # Verify that this need type requires appointment
+        if need_type not in get_need_types_requiring_appointment():
+            return jsonify({'success': False, 'error': f'Need type {need_type} does not require professional appointment'}), 400
         
         # Get staff ID
         cur.execute("""
@@ -2250,6 +2111,19 @@ def schedule_appointment():
         
         staff_id = staff_result[0]
         
+        # Get professional details for notification
+        cur.execute("""
+            SELECT full_name, email, profession_type, specialization
+            FROM professionals
+            WHERE professional_id = %s
+        """, (professional_id,))
+        
+        prof_data = cur.fetchone()
+        if not prof_data:
+            return jsonify({'success': False, 'error': 'Professional not found'}), 404
+        
+        prof_name, prof_email, prof_type, prof_specialization = prof_data
+        
         # Generate appointment ID
         cur.execute("SELECT COUNT(*) FROM appointments")
         count = cur.fetchone()[0]
@@ -2261,12 +2135,11 @@ def schedule_appointment():
                 appointment_id, request_id, citizen_email, citizen_name, citizen_phone,
                 professional_id, scheduled_by_staff_id, appointment_date, appointment_time,
                 appointment_type, notes, status
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'consultation', %s, 'pending')
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
         """, (appointment_id, request_id, citizen_email, citizen_name, citizen_phone,
-              professional_id, staff_id, appointment_date, appointment_time, notes))
+              professional_id, staff_id, appointment_date, appointment_time, appointment_type, notes))
         
-        # Update request referral status to 'scheduling' (not waiting_confirmation yet)
-        # Notification will be sent when staff clicks 'Mark Complete'
+        # Update request referral status to 'scheduling'
         cur.execute("""
             UPDATE requests
             SET referral_status = 'scheduling', appointment_id = %s
@@ -2274,37 +2147,32 @@ def schedule_appointment():
         """, (appointment_id, request_id))
         
         # Create notification for professional
-        cur.execute("""
-            SELECT email, full_name FROM professionals WHERE professional_id = %s
-        """, (professional_id,))
-        prof_data = cur.fetchone()
-        
-        if prof_data:
-            prof_email = prof_data[0]
-            prof_notification_message = f"""
-New mental health appointment scheduled for your review and confirmation.
+        service_name = get_profession_display_name(prof_type)
+        prof_notification_message = f"""
+New {service_name} appointment scheduled for your review and confirmation.
 
 Patient: {citizen_name}
 Date: {appointment_date}
 Time: {appointment_time}
-Type: Student Mental Health Consultation
-Notes: {notes}
+Service Type: {need_type.replace('-', ' ').title()}
+Appointment Type: {appointment_type.replace('-', ' ').title()}
+Notes: {notes if notes else 'None'}
 
 Please log in to your dashboard to review and confirm this appointment.
 
 Appointment ID: {appointment_id}
 """
-            
-            cur.execute("""
-                INSERT INTO notifications (recipient_email, recipient_type, notification_type, title, message, related_request_id, related_appointment_id)
-                VALUES (%s, 'professional', 'appointment_scheduled', 'New Appointment Pending Confirmation', %s, %s, %s)
-            """, (prof_email, prof_notification_message, request_id, appointment_id))
+        
+        cur.execute("""
+            INSERT INTO notifications (recipient_email, recipient_type, notification_type, title, message, related_request_id, related_appointment_id)
+            VALUES (%s, 'professional', 'appointment_scheduled', %s, %s, %s, %s)
+        """, (prof_email, f'New {service_name} Appointment Pending Confirmation', prof_notification_message, request_id, appointment_id))
         
         # Log the action
         cur.execute("""
             INSERT INTO audit_logs (action_type, user_email, user_role, entity_type, entity_id, details)
             VALUES ('CREATE', %s, 'government', 'APPOINTMENT', %s, %s)
-        """, (session['user_email'], appointment_id, f'Mental health appointment scheduled for request {request_id}'))
+        """, (session['user_email'], appointment_id, f'{service_name} appointment scheduled for request {request_id}'))
         
         conn.commit()
         
@@ -2320,12 +2188,14 @@ Appointment ID: {appointment_id}
         
         return jsonify({
             'success': True,
-            'message': 'Appointment scheduled successfully',
+            'message': f'{service_name} appointment scheduled successfully',
             'appointment_id': appointment_id
         })
     
     except Exception as e:
         print(f"Error scheduling appointment: {e}")
+        import traceback
+        traceback.print_exc()
         if conn:
             conn.rollback()
             conn.close()
@@ -2333,9 +2203,16 @@ Appointment ID: {appointment_id}
 
 @app.route('/api/professionals/list', methods=['GET'])
 def list_professionals():
-    """Get list of available mental health professionals"""
+    """Get list of available professionals, optionally filtered by profession type"""
     if 'user_email' not in session:
         return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    profession_type = request.args.get('profession_type')
+    need_type = request.args.get('need_type')
+    
+    # If need_type is provided, convert to profession_type
+    if need_type and not profession_type:
+        profession_type = get_profession_type_for_need(need_type)
     
     conn = get_db_connection()
     if not conn:
@@ -2344,53 +2221,41 @@ def list_professionals():
     try:
         cur = conn.cursor()
         
-        # For government staff, only show active professionals with basic info
-        # For admin, show all professionals with full details
-        if session.get('user_role') == 'admin':
-            cur.execute("""
-                SELECT professional_id, full_name, email, phone, license_number,
-                       specialization, qualifications, years_of_experience, status,
-                       max_appointments_per_day, total_appointments, rating, joined_date
-                FROM professionals
-                ORDER BY joined_date DESC
-            """)
-            
-            professionals = []
-            for row in cur.fetchall():
-                professionals.append({
-                    'professional_id': row[0],
-                    'full_name': row[1],
-                    'email': row[2],
-                    'phone': row[3],
-                    'license_number': row[4],
-                    'specialization': row[5],
-                    'qualifications': row[6],
-                    'years_of_experience': row[7],
-                    'status': row[8],
-                    'max_appointments_per_day': row[9],
-                    'total_appointments': row[10],
-                    'rating': float(row[11]) if row[11] else 0.0,
-                    'joined_date': row[12].isoformat() if row[12] else None
-                })
-        else:
-            # For government staff scheduling appointments
-            cur.execute("""
-                SELECT professional_id, full_name, specialization, phone, years_of_experience, rating
-                FROM professionals
-                WHERE status = 'active'
-                ORDER BY rating DESC, full_name
-            """)
-            
-            professionals = []
-            for row in cur.fetchall():
-                professionals.append({
-                    'professional_id': row[0],
-                    'full_name': row[1],
-                    'specialization': row[2],
-                    'phone': row[3],
-                    'years_of_experience': row[4],
-                    'rating': float(row[5]) if row[5] else 0.0
-                })
+        # Build query with optional profession_type filter
+        query = """
+            SELECT professional_id, full_name, email, phone, profession_type,
+                   specialization, department, license_number, years_of_experience, 
+                   status, max_appointments_per_day, total_appointments, rating
+            FROM professionals
+            WHERE status = 'active'
+        """
+        params = []
+        
+        if profession_type:
+            query += " AND profession_type = %s"
+            params.append(profession_type)
+        
+        query += " ORDER BY rating DESC, full_name"
+        
+        cur.execute(query, params)
+        
+        professionals = []
+        for row in cur.fetchall():
+            professionals.append({
+                'professional_id': row[0],
+                'full_name': row[1],
+                'email': row[2],
+                'phone': row[3],
+                'profession_type': row[4],
+                'specialization': row[5],
+                'department': row[6],
+                'license_number': row[7],
+                'years_of_experience': row[8],
+                'status': row[9],
+                'max_appointments_per_day': row[10],
+                'total_appointments': row[11],
+                'rating': float(row[12]) if row[12] else 0.0
+            })
         
         cur.close()
         conn.close()
@@ -2402,6 +2267,22 @@ def list_professionals():
         if conn:
             conn.close()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+# Add new endpoint for specialization options
+@app.route('/api/specialization-options', methods=['GET'])
+def get_specialization_options():
+    """Get specialization options for a profession type"""
+    profession_type = request.args.get('profession_type')
+    
+    if not profession_type:
+        return jsonify({'success': False, 'error': 'profession_type is required'}), 400
+    
+    options = get_specialization_options_by_profession().get(profession_type, [])
+    
+    return jsonify({
+        'success': True,
+        'specializations': options
+    })
 
 # ============================================
 # ADMIN - PROFESSIONALS MANAGEMENT
@@ -2465,7 +2346,7 @@ def admin_create_professional():
     data = request.get_json()
     
     # Validate required fields
-    required_fields = ['full_name', 'email', 'password', 'license_number', 'specialization', 'years_of_experience']
+    required_fields = ['full_name', 'email', 'password', 'profession_type', 'license_number', 'specialization', 'years_of_experience']
     missing_fields = [field for field in required_fields if field not in data or not data[field]]
     
     if missing_fields:
@@ -2494,23 +2375,37 @@ def admin_create_professional():
         # Generate unique official ID
         official_id = generate_professional_official_id(conn)
         
+        # Determine department based on profession type
+        department_mapping = {
+            'medical-doctor': 'medical',
+            'dentist': 'dental-services',
+            'immunization-doctor': 'immunization',
+            'mental-health-doctor': 'mental-health',
+            'medical-technologist': 'laboratory'
+        }
+        department = department_mapping.get(data['profession_type'], data['profession_type'])
+        
         # Insert new professional
         cur.execute("""
             INSERT INTO professionals (
                 professional_id, full_name, email, password_hash, phone, 
-                license_number, specialization, qualifications, years_of_experience,
-                status, max_appointments_per_day, added_by, added_date
+                profession_type, specialization, department, official_id, license_number, 
+                qualifications, years_of_experience, status, max_appointments_per_day, 
+                added_by, added_date
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
             RETURNING professional_id
         """, (
-            official_id,  # Use official_id as professional_id
+            official_id,
             data['full_name'],
             data['email'],
             password_hash,
             data.get('phone', ''),
-            data['license_number'],
+            data['profession_type'],
             data['specialization'],
+            department,
+            official_id,
+            data['license_number'],
             data.get('qualifications', ''),
             int(data['years_of_experience']),
             data.get('status', 'active'),
@@ -2534,7 +2429,7 @@ def admin_create_professional():
             'admin',
             'PROFESSIONAL',
             professional_id,
-            f"Created professional: {data['full_name']} ({data['email']})",
+            f"Created {get_profession_display_name(data['profession_type'])}: {data['full_name']} ({data['email']})",
             request.remote_addr
         ))
         
@@ -2773,9 +2668,6 @@ def mark_notification_read():
 if __name__ == '__main__':
     # Load requests from database on startup
     init_app()
-    
-    # Initialize mock data for testing (if needed)
-    init_mock_data()
     
     # Start the Flask application
     app.run(debug=True, host='0.0.0.0', port=5000)
