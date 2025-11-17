@@ -1,10 +1,10 @@
 -- ============================================
 -- NEED-BASED GOVERNMENT RESPONSE SYSTEM
--- CLEANED PostgreSQL SCHEMA (City Health focus)
+-- FULL PostgreSQL SCHEMA (City Health focus)
 -- Created: 2025-11-17
 -- ============================================
 
--- 0) DROP existing tables in safe order (CASCADE to remove dependent objects)
+-- 0) DROP existing tables in safe order
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS appointments CASCADE;
 DROP TABLE IF EXISTS professionals CASCADE;
@@ -50,7 +50,7 @@ CREATE TABLE staff (
 );
 
 -- ============================================
--- 3) PROFESSIONALS TABLE (All service professionals)
+-- 3) PROFESSIONALS TABLE (Service professionals)
 -- ============================================
 CREATE TABLE professionals (
     professional_id VARCHAR(50) PRIMARY KEY,
@@ -58,15 +58,15 @@ CREATE TABLE professionals (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
-    profession_type VARCHAR(100) NOT NULL, -- e.g., 'medical-doctor', 'dentist', 'psychiatrist'
-    specialization VARCHAR(150),             -- e.g., 'General Medicine', 'Orthodontics', 'Clinical Psychology'
+    profession_type VARCHAR(100) NOT NULL,
+    specialization VARCHAR(150),
     department VARCHAR(150), 
     official_id VARCHAR(50) UNIQUE,
     license_number VARCHAR(50) UNIQUE,
     qualifications TEXT,
     years_of_experience INTEGER DEFAULT 0,
     status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on-leave')),
-    availability_schedule JSONB, -- {"monday": ["09:00-12:00", "1:00-5:00"], ...}
+    availability_schedule JSONB,
     max_appointments_per_day INTEGER DEFAULT 8,
     joined_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
@@ -78,22 +78,15 @@ CREATE TABLE professionals (
 
 -- ============================================
 -- 4) REQUESTS TABLE (City Health requests)
--- Single definitive definition — used by appointments and notifications
 -- ============================================
 CREATE TABLE requests (
     request_id VARCHAR(50) PRIMARY KEY,
-
-    -- Citizen info (snapshot at time of request)
     citizen_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
-
-    -- Location
     location_address TEXT,
     location_lat DECIMAL(10,8),
     location_lng DECIMAL(11,8),
-
-    -- Type of need (consistent normalized values)
     need_type VARCHAR(50) NOT NULL CHECK (need_type IN (
         'medical',
         'sanitary-inspection',
@@ -102,27 +95,15 @@ CREATE TABLE requests (
         'laboratory',
         'mental-health'
     )),
-
     severity VARCHAR(50) NOT NULL CHECK (severity IN ('critical','urgent','moderate','low')),
     people_affected INTEGER DEFAULT 1,
-
     description TEXT NOT NULL,
-
-    -- Vulnerability flags, e.g. {"senior": true, "pwd": false}
     vulnerability_group JSONB,
     special_circumstances TEXT,
-
-    -- Evidence (images/docs stored elsewhere, boolean flag)
     has_evidence BOOLEAN DEFAULT FALSE,
-
-    -- Link to scheduled appointment (if any)
     appointment_id VARCHAR(50),
-
-    -- Referral/status workflow for cases that need specialist referral (optional)
     referral_status VARCHAR(50) DEFAULT 'none'
         CHECK (referral_status IN ('none','scheduling','waiting_confirmation','confirmed','completed')),
-
-    -- Processing status for the request
     status VARCHAR(50) DEFAULT 'pending'
         CHECK (status IN (
             'pending',
@@ -135,28 +116,19 @@ CREATE TABLE requests (
             'cancelled',
             'rejected'
         )),
-
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
-
     verification_count INTEGER DEFAULT 0,
     priority_score INTEGER DEFAULT 0,
     estimated_response_time VARCHAR(100),
-
-    -- Assignment
     assigned_to VARCHAR(100),
     assigned_staff_id VARCHAR(50),
-
     FOREIGN KEY (assigned_staff_id) REFERENCES staff(staff_id) ON DELETE SET NULL
 );
 
--- Add foreign key for appointment link (requests.appointment_id -> appointments later)
--- This will be added after appointments table is created (see below).
-
 -- ============================================
--- 5) APPOINTMENTS TABLE (Generalized across services)
--- References requests, professionals, staff
+-- 5) APPOINTMENTS TABLE
 -- ============================================
 CREATE TABLE appointments (
     appointment_id VARCHAR(50) PRIMARY KEY,
@@ -182,18 +154,18 @@ CREATE TABLE appointments (
     )),
     notes TEXT,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN (
-        'pending','confirmed','completed','cancelled','no-show','rescheduled')),
+        'pending','confirmed','completed','cancelled','no-show','rescheduled'
+    )),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     confirmed_at TIMESTAMP,
     completed_at TIMESTAMP,
     cancellation_reason TEXT,
-
     FOREIGN KEY (request_id) REFERENCES requests(request_id) ON DELETE CASCADE,
     FOREIGN KEY (professional_id) REFERENCES professionals(professional_id) ON DELETE SET NULL,
     FOREIGN KEY (scheduled_by_staff_id) REFERENCES staff(staff_id) ON DELETE SET NULL
 );
 
--- Now add FK from requests.appointment_id -> appointments
+-- Link requests to appointments
 ALTER TABLE requests
     ADD CONSTRAINT fk_requests_appointment
     FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL;
@@ -215,13 +187,12 @@ CREATE TABLE notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     read_at TIMESTAMP,
-
     FOREIGN KEY (related_request_id) REFERENCES requests(request_id) ON DELETE CASCADE,
     FOREIGN KEY (related_appointment_id) REFERENCES appointments(appointment_id) ON DELETE CASCADE
 );
 
 -- ============================================
--- 7) AUDIT LOGS TABLE (System Activity)
+-- 7) AUDIT LOGS TABLE
 -- ============================================
 CREATE TABLE audit_logs (
     audit_id SERIAL PRIMARY KEY,
@@ -238,7 +209,6 @@ CREATE TABLE audit_logs (
 
 -- ============================================
 -- 8) TRIGGERS
--- Update requests.updated_at on any UPDATE
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -346,9 +316,9 @@ SELECT
 FROM requests;
 
 -- ============================================
--- 11) SAMPLE DATA (small seeds)
+-- 11) SAMPLE DATA
 -- ============================================
--- Sample citizens (password hashes are example bcrypt strings)
+-- Sample citizens
 INSERT INTO citizens (email, password_hash, full_name, phone)
 VALUES
 ('john@example.com', '$2b$12$examplehashforpassword12345678abcdefg', 'John Doe', '+1-555-0001'),
@@ -359,7 +329,7 @@ INSERT INTO staff (staff_id, full_name, email, password_hash, phone, official_id
 VALUES
 ('ADMIN-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
 
--- Sample professionals (medical, dental, mental health)
+-- Sample professionals
 INSERT INTO professionals 
 (professional_id, full_name, email, password_hash, phone, profession_type, official_id, specialization, department, license_number, qualifications, years_of_experience, status)
 VALUES
@@ -373,13 +343,13 @@ INSERT INTO appointments
 VALUES
 ('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
 
--- Sample Requests
+-- Sample requests
 INSERT INTO requests
 (request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
 VALUES
 ('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
 
--- Sample Notification
+-- Sample notification
 INSERT INTO notifications
 (recipient_email, recipient_type, notification_type, title, message, related_request_id, related_appointment_id, is_read, created_at)
 VALUES
@@ -387,10 +357,7 @@ VALUES
 'Hello John Doe, your counseling appointment with Dr. Maria Angela Cruz is confirmed for 2025-11-20 at 10:00 AM.', 
 'REQ-0001', 'APP-0001', FALSE, CURRENT_TIMESTAMP);
 
-
--- ============================================
--- 12) OPTIONAL: initialize referral_status default for existing rows (if any)
--- (safe no-op if column already has defaults)
+-- (12) Optional: initialize referral_status default for existing rows
 UPDATE requests SET referral_status = 'none' WHERE referral_status IS NULL;
 
 -- ============================================
@@ -403,6 +370,3 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM professionals) AS total_professionals,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
-
-
-
