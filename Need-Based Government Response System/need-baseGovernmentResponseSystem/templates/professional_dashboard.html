@@ -10,11 +10,12 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                        <i data-lucide="stethoscope" class="w-6 h-6 text-white"></i>
+                        <i data-lucide="user-check" class="w-6 h-6 text-white"></i>
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold">{{ professional_name }}</h1>
-                        <p class="text-white/80 text-sm">Mental Health Professional</p>
+                        <p class="text-white/80 text-sm">{{ profession_type }}</p>
+                        <p class="text-white/60 text-xs">{{ specialization }}</p>
                     </div>
                 </div>
                 
@@ -157,6 +158,29 @@ function formatTime(timeStr) {
     return `${displayHour}:${minutes} ${ampm}`;
 }
 
+// Get appointment icon based on type
+function getAppointmentIcon(appointmentType) {
+    const icons = {
+        'consultation': 'stethoscope',
+        'medical-checkup': 'clipboard-check',
+        'dental-checkup': 'smile',
+        'treatment': 'pill',
+        'therapy': 'brain',
+        'counseling': 'message-circle',
+        'procedure': 'activity',
+        'follow-up': 'repeat',
+        'emergency': 'alert-circle'
+    };
+    return icons[appointmentType] || 'calendar';
+}
+
+// Format appointment type for display
+function formatAppointmentType(type) {
+    return type.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
 // Render appointments
 function renderAppointments() {
     const pendingContainer = document.getElementById('pendingAppointments');
@@ -225,8 +249,8 @@ function renderAppointments() {
                         <div>
                             <p class="text-xs text-gray-500 mb-1 font-semibold uppercase">Type</p>
                             <p class="text-sm font-bold text-[#33272a] capitalize">
-                                <i data-lucide="file-text" class="w-4 h-4 inline mr-1 text-orange-500"></i>
-                                ${appt.type}
+                                <i data-lucide="${getAppointmentIcon(appt.type)}" class="w-4 h-4 inline mr-1 text-orange-500"></i>
+                                ${formatAppointmentType(appt.type)}
                             </p>
                         </div>
                     </div>
@@ -314,6 +338,13 @@ function renderAppointments() {
                             </p>
                         </div>
                         <div>
+                            <p class="text-xs text-gray-500 mb-1 font-semibold uppercase">Type</p>
+                            <p class="text-sm font-bold text-[#33272a] capitalize">
+                                <i data-lucide="${getAppointmentIcon(appt.type)}" class="w-4 h-4 inline mr-1 text-green-600"></i>
+                                ${formatAppointmentType(appt.type)}
+                            </p>
+                        </div>
+                        <div>
                             <p class="text-xs text-gray-500 mb-1 font-semibold uppercase">Confirmed</p>
                             <p class="text-sm font-bold text-[#33272a]">
                                 <i data-lucide="check" class="w-4 h-4 inline mr-1 text-green-600"></i>
@@ -355,7 +386,10 @@ function renderAppointments() {
                             </div>
                             <div>
                                 <h3 class="text-lg font-bold text-[#33272a]">${appt.citizen_name}</h3>
-                                <p class="text-sm text-gray-600">${formatDate(appt.date)} at ${formatTime(appt.time)}</p>
+                                <p class="text-sm text-gray-600">
+                                    <i data-lucide="${getAppointmentIcon(appt.type)}" class="w-3 h-3 inline mr-1"></i>
+                                    ${formatAppointmentType(appt.type)} - ${formatDate(appt.date)} at ${formatTime(appt.time)}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -424,7 +458,7 @@ async function confirmAppointment(appointmentId) {
 function viewDetails(appointmentId) {
     const appt = appointments.find(a => a.appointment_id === appointmentId);
     if (appt) {
-        alert(`Appointment Details:\n\nPatient: ${appt.citizen_name}\nEmail: ${appt.citizen_email}\nPhone: ${appt.citizen_phone || 'Not provided'}\nDate: ${formatDate(appt.date)}\nTime: ${formatTime(appt.time)}\nType: ${appt.type}\nNotes: ${appt.notes || 'None'}`);
+        alert(`Appointment Details:\n\nPatient: ${appt.citizen_name}\nEmail: ${appt.citizen_email}\nPhone: ${appt.citizen_phone || 'Not provided'}\nDate: ${formatDate(appt.date)}\nTime: ${formatTime(appt.time)}\nType: ${formatAppointmentType(appt.type)}\nNotes: ${appt.notes || 'None'}`);
     }
 }
 
