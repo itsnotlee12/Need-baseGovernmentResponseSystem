@@ -1,7 +1,7 @@
 -- ============================================
 -- NEED-BASED GOVERNMENT RESPONSE SYSTEM
 -- FULL PostgreSQL SCHEMA (City Health focus)
--- Created: 2025-11-17
+-- UPDATED: 2025-11-17
 -- ============================================
 
 -- 0) DROP existing tables in safe order
@@ -60,7 +60,7 @@ CREATE TABLE professionals (
     phone VARCHAR(50),
     profession_type VARCHAR(100) NOT NULL,
     specialization VARCHAR(150),
-    department VARCHAR(150), 
+    department VARCHAR(150),
     official_id VARCHAR(50) UNIQUE,
     license_number VARCHAR(50) UNIQUE,
     qualifications TEXT,
@@ -106,15 +106,8 @@ CREATE TABLE requests (
         CHECK (referral_status IN ('none','scheduling','waiting_confirmation','confirmed','completed')),
     status VARCHAR(50) DEFAULT 'pending'
         CHECK (status IN (
-            'pending',
-            'reviewing',
-            'approved',
-            'scheduling',
-            'scheduled',
-            'in-progress',
-            'completed',
-            'cancelled',
-            'rejected'
+            'pending','reviewing','approved','scheduling','scheduled',
+            'in-progress','completed','cancelled','rejected'
         )),
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -142,15 +135,8 @@ CREATE TABLE appointments (
     appointment_time TIME NOT NULL,
     duration_minutes INTEGER DEFAULT 30,
     appointment_type VARCHAR(50) DEFAULT 'consultation' CHECK (appointment_type IN (
-        'consultation',
-        'medical-checkup',
-        'dental-checkup',
-        'treatment',
-        'therapy',
-        'counseling',
-        'procedure',
-        'follow-up',
-        'emergency'
+        'consultation','medical-checkup','dental-checkup','treatment',
+        'therapy','counseling','procedure','follow-up','emergency'
     )),
     notes TEXT,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN (
@@ -164,6 +150,7 @@ CREATE TABLE appointments (
     FOREIGN KEY (professional_id) REFERENCES professionals(professional_id) ON DELETE SET NULL,
     FOREIGN KEY (scheduled_by_staff_id) REFERENCES staff(staff_id) ON DELETE SET NULL
 );
+
 
 -- ============================================
 -- 6) NOTIFICATIONS TABLE
@@ -203,7 +190,7 @@ CREATE TABLE audit_logs (
 );
 
 -- ============================================
--- 8) TRIGGERS
+-- 8) TRIGGER FOR UPDATED_AT
 -- ============================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -219,54 +206,55 @@ BEFORE UPDATE ON requests
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- 9) INDEXES for Performance
+-- 9) INDEXES
 -- ============================================
+
 -- Citizens
-CREATE INDEX IF NOT EXISTS idx_citizens_email ON citizens(email);
-CREATE INDEX IF NOT EXISTS idx_citizens_active ON citizens(is_active);
+CREATE INDEX idx_citizens_email ON citizens(email);
+CREATE INDEX idx_citizens_active ON citizens(is_active);
 
 -- Staff
-CREATE INDEX IF NOT EXISTS idx_staff_email ON staff(email);
-CREATE INDEX IF NOT EXISTS idx_staff_department ON staff(department);
-CREATE INDEX IF NOT EXISTS idx_staff_role ON staff(role);
-CREATE INDEX IF NOT EXISTS idx_staff_status ON staff(status);
+CREATE INDEX idx_staff_email ON staff(email);
+CREATE INDEX idx_staff_department ON staff(department);
+CREATE INDEX idx_staff_role ON staff(role);
+CREATE INDEX idx_staff_status ON staff(status);
 
 -- Professionals
-CREATE INDEX IF NOT EXISTS idx_professionals_email ON professionals(email);
-CREATE INDEX IF NOT EXISTS idx_professionals_status ON professionals(status);
-CREATE INDEX IF NOT EXISTS idx_professionals_profession_type ON professionals(profession_type);
-CREATE INDEX IF NOT EXISTS idx_professionals_license ON professionals(license_number);
+CREATE INDEX idx_professionals_email ON professionals(email);
+CREATE INDEX idx_professionals_status ON professionals(status);
+CREATE INDEX idx_professionals_profession_type ON professionals(profession_type);
+CREATE INDEX idx_professionals_license ON professionals(license_number);
 
 -- Requests
-CREATE INDEX IF NOT EXISTS idx_requests_email ON requests(email);
-CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
-CREATE INDEX IF NOT EXISTS idx_requests_severity ON requests(severity);
-CREATE INDEX IF NOT EXISTS idx_requests_priority ON requests(priority_score DESC);
-CREATE INDEX IF NOT EXISTS idx_requests_submitted ON requests(submitted_at DESC);
-CREATE INDEX IF NOT EXISTS idx_requests_assigned_staff ON requests(assigned_staff_id);
-CREATE INDEX IF NOT EXISTS idx_requests_need_type ON requests(need_type);
+CREATE INDEX idx_requests_email ON requests(email);
+CREATE INDEX idx_requests_status ON requests(status);
+CREATE INDEX idx_requests_severity ON requests(severity);
+CREATE INDEX idx_requests_priority ON requests(priority_score);  -- FIXED (removed DESC)
+CREATE INDEX idx_requests_submitted ON requests(submitted_at DESC);
+CREATE INDEX idx_requests_assigned_staff ON requests(assigned_staff_id);
+CREATE INDEX idx_requests_need_type ON requests(need_type);
 
 -- Appointments
-CREATE INDEX IF NOT EXISTS idx_appointments_request ON appointments(request_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_professional ON appointments(professional_id);
-CREATE INDEX IF NOT EXISTS idx_appointments_citizen ON appointments(citizen_email);
-CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(appointment_date);
-CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
-CREATE INDEX IF NOT EXISTS idx_appointments_scheduled_by ON appointments(scheduled_by_staff_id);
+CREATE INDEX idx_appointments_request ON appointments(request_id);
+CREATE INDEX idx_appointments_professional ON appointments(professional_id);
+CREATE INDEX idx_appointments_citizen ON appointments(citizen_email);
+CREATE INDEX idx_appointments_date ON appointments(appointment_date);
+CREATE INDEX idx_appointments_status ON appointments(status);
+CREATE INDEX idx_appointments_scheduled_by ON appointments(scheduled_by_staff_id);
 
 -- Notifications
-CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_email);
-CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(notification_type);
-CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(is_read);
-CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_notifications_request ON notifications(related_request_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_appointment ON notifications(related_appointment_id);
+CREATE INDEX idx_notifications_recipient ON notifications(recipient_email);
+CREATE INDEX idx_notifications_type ON notifications(notification_type);
+CREATE INDEX idx_notifications_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created ON notifications(created_at DESC);
+CREATE INDEX idx_notifications_request ON notifications(related_request_id);
+CREATE INDEX idx_notifications_appointment ON notifications(related_appointment_id);
 
 -- Audit logs
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_email);
-CREATE INDEX IF NOT EXISTS idx_audit_action_type ON audit_logs(action_type);
-CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX idx_audit_timestamp ON audit_logs(timestamp DESC);
+CREATE INDEX idx_audit_user ON audit_logs(user_email);
+CREATE INDEX idx_audit_action_type ON audit_logs(action_type);
+CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
 
 -- ============================================
 -- 10) VIEWS (useful for dashboard)
@@ -313,38 +301,52 @@ FROM requests;
 -- ============================================
 -- 11) SAMPLE DATA
 -- ============================================
--- Sample citizens password kay default123
-INSERT INTO citizens (email, password_hash, full_name, phone)
-VALUES
+
+-- Citizens
+INSERT INTO citizens (email, password_hash, full_name, phone) VALUES
 ('john@example.com', '$2b$12$examplehashforpassword12345678abcdefg', 'John Doe', '+1-555-0001'),
 ('sarah@example.com', '$2b$12$examplehashforpassword12345678abcdefg', 'Sarah Smith', '+1-555-0002');
 
--- Sample staff password kay default123
+-- Staff
 INSERT INTO staff (staff_id, full_name, email, password_hash, phone, official_id, department, role, employee_id, status, joined_date, requests_handled, permissions, added_by, added_date)
 VALUES
 ('ADMIN-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
 
--- Sample professionals password kay default123
+-- Professionals (5 types)
 INSERT INTO professionals 
 (professional_id, full_name, email, password_hash, phone, profession_type, official_id, specialization, department, license_number, qualifications, years_of_experience, status)
 VALUES
-('PRO-0001', 'Dr. Alice Santos', 'alice.santos@cityhealth.gov', '$2b$12$examplehash', '+63-912-000001', 'medical-doctor', 'GOV-1234', 'General Medicine', 'medical', 'LIC-1001', 'MD', 8, 'active'),
-('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002', 'dentist', 'GOV-1235', 'General Dentistry', 'dental-services', 'LIC-2001', 'DDS', 5, 'active'),
-('PRO-0003', 'Dr. Maria Angela Cruz', 'maria.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000003', 'psychiatrist', 'GOV-1236', 'Clinical Psychology', 'mental-health', 'LIC-3001', 'MD, Psychiatry', 7, 'active');
+('PRO-0001', 'Dr. Alice Santos', 'alice.santos@cityhealth.gov', '$2b$12$examplehash', '+63-912-000001',
+ 'medical-doctor', 'GOV-3001', 'General Medicine', 'medical', 'LIC-MED-001', 'MD, General Medicine', 10, 'active'),
 
--- Sample requests
+('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002',
+ 'dentist', 'GOV-3002', 'General Dentistry', 'dental-services', 'LIC-DEN-001', 'DDS', 7, 'active'),
+
+('PRO-0004', 'Dr. Carla Reyes', 'carla.reyes@cityhealth.gov', '$2b$12$examplehash', '+63-912-000003',
+ 'immunization-doctor', 'GOV-3003', 'Immunization & Public Health', 'immunization', 'LIC-IMMU-001', 'MD, Public Health', 6, 'active'),
+
+('PRO-0003', 'Dr. Maria Angela Cruz', 'maria.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000004',
+ 'mental-health-doctor', 'GOV-3004', 'Psychiatry & Mental Wellness', 'mental-health', 'LIC-MENT-001', 'MD, Psychiatry', 8, 'active'),
+
+('PRO-0006', 'MedTech John Flores', 'john.flores@cityhealth.gov', '$2b$12$examplehash', '+63-912-000005',
+ 'medical-technologist', 'GOV-3005', 'Diagnostics & Lab Testing', 'laboratory', 'LIC-LAB-001', 'RMT, Laboratory Medicine', 5, 'active');
+
+-- Requests
 INSERT INTO requests
 (request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
 VALUES
-('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
+('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 
+ 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 
+ 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
 
--- Sample appointment
+-- Appointments
 INSERT INTO appointments
 (appointment_id, request_id, citizen_email, citizen_name, citizen_phone, professional_id, scheduled_by_staff_id, appointment_date, appointment_time, duration_minutes, appointment_type, notes, status, created_at)
 VALUES
-('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
+('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', 
+ '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
 
--- Sample notification
+-- Notification
 INSERT INTO notifications
 (recipient_email, recipient_type, notification_type, title, message, related_request_id, related_appointment_id, is_read, created_at)
 VALUES
@@ -352,11 +354,11 @@ VALUES
 'Hello John Doe, your counseling appointment with Dr. Maria Angela Cruz is confirmed for 2025-11-20 at 10:00 AM.', 
 'REQ-0001', 'APP-0001', FALSE, CURRENT_TIMESTAMP);
 
--- 12) Optional: initialize referral_status default for existing rows
+-- 12) optional rani siya og ganahan kag dili null ang mo display sa database nimo 
 UPDATE requests SET referral_status = 'none' WHERE referral_status IS NULL;
 
 -- ============================================
--- 13) VERIFICATION SUMMARY
+-- 13) VERIFICATION QUERY
 -- ============================================
 SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM citizens) AS total_citizens,
@@ -365,3 +367,6 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM professionals) AS total_professionals,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
+
+
+
