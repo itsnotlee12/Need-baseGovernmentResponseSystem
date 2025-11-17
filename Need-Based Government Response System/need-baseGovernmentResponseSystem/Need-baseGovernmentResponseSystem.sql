@@ -354,11 +354,10 @@ VALUES
 'Hello John Doe, your counseling appointment with Dr. Maria Angela Cruz is confirmed for 2025-11-20 at 10:00 AM.', 
 'REQ-0001', 'APP-0001', FALSE, CURRENT_TIMESTAMP);
 
--- 12) optional rani siya og ganahan kag dili null ang mo display sa database nimo 
 UPDATE requests SET referral_status = 'none' WHERE referral_status IS NULL;
 
 -- ============================================
--- 13) VERIFICATION QUERY
+-- 12) VERIFICATION QUERY
 -- ============================================
 SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM citizens) AS total_citizens,
@@ -368,5 +367,11 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
 
+select * from staff;
 
+-- Add specification column to requests table
+ALTER TABLE requests 
+ADD COLUMN IF NOT EXISTS specification VARCHAR(100);
 
+-- Add index for better performance
+CREATE INDEX IF NOT EXISTS idx_requests_specification ON requests(specification);
