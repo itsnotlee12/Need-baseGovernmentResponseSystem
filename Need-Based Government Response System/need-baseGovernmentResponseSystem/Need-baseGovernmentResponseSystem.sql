@@ -367,17 +367,17 @@ VALUES
 ('PRO-0002', 'Dr. Ben Cruz', 'ben.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000002', 'dentist', 'GOV-1235', 'General Dentistry', 'dental-services', 'LIC-2001', 'DDS', 5, 'active'),
 ('PRO-0003', 'Dr. Maria Angela Cruz', 'maria.cruz@cityhealth.gov', '$2b$12$examplehash', '+63-912-000003', 'psychiatrist', 'GOV-1236', 'Clinical Psychology', 'mental-health', 'LIC-3001', 'MD, Psychiatry', 7, 'active');
 
--- Sample Requests
-INSERT INTO requests
-(request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
-VALUES
-('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
-
 -- Sample appointment
 INSERT INTO appointments
 (appointment_id, request_id, citizen_email, citizen_name, citizen_phone, professional_id, scheduled_by_staff_id, appointment_date, appointment_time, duration_minutes, appointment_type, notes, status, created_at)
 VALUES
 ('APP-0001', 'REQ-0001', 'john@example.com', 'John Doe', '+1-555-0001', 'PRO-0003', 'ADMIN-0001', '2025-11-20', '10:00:00', 60, 'counseling', 'Initial mental health consultation', 'confirmed', CURRENT_TIMESTAMP);
+
+-- Sample Requests
+INSERT INTO requests
+(request_id, citizen_name, email, phone, location_address, need_type, severity, people_affected, description, vulnerability_group, has_evidence, status, assigned_to, assigned_staff_id, appointment_id)
+VALUES
+('REQ-0001', 'John Doe', 'john@example.com', '+1-555-0001', '123 Main St, City', 'mental-health', 'urgent', 1, 'Feeling stressed and anxious, needs counseling.', '{"senior": false, "pwd": false}', TRUE, 'scheduling', 'Dr. Maria Angela Cruz', 'ADMIN-0001', 'APP-0001');
 
 -- Sample Notification
 INSERT INTO notifications
@@ -403,5 +403,6 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM professionals) AS total_professionals,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
+
 
 
