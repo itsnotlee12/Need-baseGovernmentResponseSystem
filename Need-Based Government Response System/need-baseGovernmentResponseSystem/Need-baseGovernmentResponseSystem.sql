@@ -58,8 +58,8 @@ CREATE TABLE professionals (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(50),
-    profession_type VARCHAR(100) NOT NULL, -- e.g., 'medical-doctor', 'dentist', 'psychiatrist', 'nurse'
-    specialization VARCHAR(150),             -- e.g., 'pediatrics', 'orthodontics'
+    profession_type VARCHAR(100) NOT NULL, -- e.g., 'medical-doctor', 'dentist', 'psychiatrist'
+    specialization VARCHAR(150),             -- e.g., 'General Medicine', 'Orthodontics', 'Clinical Psychology'
     department VARCHAR(150),                 -- e.g., 'medical', 'dental', 'mental-health'
     license_number VARCHAR(50) UNIQUE,
     qualifications TEXT,
@@ -356,7 +356,7 @@ VALUES
 -- Sample staff
 INSERT INTO staff (staff_id, full_name, email, password_hash, phone, official_id, department, role, employee_id, status, joined_date, requests_handled, permissions, added_by, added_date)
 VALUES
-('ADMIN-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
+('GOV-0001', 'John Administrator', 'john.administrator@gov.example.com', '$2b$12$examplehashforpassword', '+1-555-7716', 'GOV-10001', 'administration', 'admin', 'EMP-0001', 'active', '2020-01-01 08:00:00', 0, '{"viewRequests": true, "manageRequests": true}', 'system', CURRENT_TIMESTAMP);
 
 -- Sample professionals (medical and dental)
 INSERT INTO professionals (professional_id, full_name, email, password_hash, phone, profession_type, specialization, department, license_number, qualifications, years_of_experience, status)
@@ -379,3 +379,4 @@ SELECT 'Database created successfully!' AS status,
        (SELECT COUNT(*) FROM professionals) AS total_professionals,
        (SELECT COUNT(*) FROM appointments) AS total_appointments,
        (SELECT COUNT(*) FROM notifications) AS total_notifications;
+
