@@ -630,7 +630,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-2xl font-bold text-white" id="professionalModalTitle">Add New Professional</h3>
-                    <p class="text-sm text-white/80 mt-1">Fill in the details to add a mental health professional</p>
+                    <p class="text-sm text-white/80 mt-1">Fill in the details to add a health professional</p>
                 </div>
                 <button onclick="closeProfessionalModal()" class="text-white/80 hover:text-white transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -659,13 +659,13 @@
                     
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Email Address *</label>
-                        <input type="email" id="profEmail" required placeholder="doctor@example.com" 
+                        <input type="email" id="profEmail" required placeholder="doctor@cityhealth.gov" 
                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                     </div>
                     
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Phone Number *</label>
-                        <input type="tel" id="profPhone" required placeholder="+1-555-0000" 
+                        <input type="tel" id="profPhone" required placeholder="+63-912-000000" 
                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                     </div>
                     
@@ -678,7 +678,7 @@
                     
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">License Number *</label>
-                        <input type="text" id="profLicense" required placeholder="PSY-12345" 
+                        <input type="text" id="profLicense" required placeholder="LIC-MED-001" 
                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                     </div>
                     
@@ -697,36 +697,40 @@
             <div>
                 <div class="flex items-center space-x-2 mb-4">
                     <div class="p-2 bg-[#33272a] rounded-lg">
-                        <i data-lucide="stethoscope" class="w-5 h-5 text-white"></i>
+                        <i data-lucide="briefcase" class="w-5 h-5 text-white"></i>
                     </div>
                     <h4 class="text-lg font-bold text-[#33272a]">Professional Details</h4>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Profession Type -->
+                    <div>
+                        <label class="block text-sm font-semibold text-[#33272a] mb-2">Profession Type *</label>
+                        <select id="profProfessionType" required onchange="updateSpecializationOptions()"
+                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
+                            <option value="">Select Profession Type</option>
+                            <option value="medical-doctor">Medical Doctor</option>
+                            <option value="dentist">Dentist</option>
+                            <option value="immunization-doctor">Immunization Doctor</option>
+                            <option value="mental-health-doctor">Mental Health Professional</option>
+                            <option value="medical-technologist">Medical Technologist</option>
+                        </select>
+                        <p class="text-xs text-[#594a4e] mt-1" id="professionTypeHelp">Select the professional's medical specialty area</p>
+                    </div>
+                    
+                    <!-- Specialization - Updates based on profession type -->
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Specialization *</label>
                         <select id="profSpecialization" required 
                                 class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
-                            <option value="">Select Specialization</option>
-                            <option value="Clinical Psychologist">Clinical Psychologist</option>
-                            <option value="Psychiatrist">Psychiatrist</option>
-                            <option value="Licensed Counselor">Licensed Counselor</option>
-                            <option value="Child Psychologist">Child Psychologist</option>
-                            <option value="Family Therapist">Family Therapist</option>
-                            <option value="Behavioral Therapist">Behavioral Therapist</option>
+                            <option value="">First select profession type</option>
                         </select>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Years of Experience *</label>
-                        <input type="number" id="profExperience" required min="0" placeholder="10" 
+                        <input type="number" id="profExperience" required min="0" max="50" placeholder="10" 
                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
-                    </div>
-                    
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-[#33272a] mb-2">Qualifications</label>
-                        <textarea id="profQualifications" rows="3" placeholder="Ph.D. in Clinical Psychology, Licensed Therapist..." 
-                                  class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent"></textarea>
                     </div>
                     
                     <div>
@@ -735,12 +739,19 @@
                                class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                     </div>
                     
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-[#33272a] mb-2">Qualifications</label>
+                        <textarea id="profQualifications" rows="3" placeholder="MD, Board Certified, Licensed..." 
+                                  class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent"></textarea>
+                    </div>
+                    
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Status *</label>
                         <select id="profStatus" required 
                                 class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
+                            <option value="on-leave">On Leave</option>
                         </select>
                     </div>
                 </div>
@@ -1081,6 +1092,7 @@
         }
     }
 
+    // Updated display function to show profession type
     function displayProfessionals(professionals) {
         const tbody = document.getElementById('professionalsTableBody');
         
@@ -1097,6 +1109,15 @@
             return;
         }
 
+        // Map profession types to display names
+        const professionNames = {
+            'medical-doctor': 'Medical Doctor',
+            'dentist': 'Dentist',
+            'immunization-doctor': 'Immunization Doctor',
+            'mental-health-doctor': 'Mental Health Professional',
+            'medical-technologist': 'Medical Technologist'
+        };
+
         tbody.innerHTML = professionals.map(prof => `
             <tr class="hover:bg-[#faeee7]/50 transition-colors">
                 <td class="px-6 py-4">
@@ -1112,9 +1133,12 @@
                     </div>
                 </td>
                 <td class="px-6 py-4">
-                    <span class="px-3 py-1 bg-[#faeee7] text-[#33272a] text-xs rounded-full font-semibold">
-                        ${prof.specialization}
-                    </span>
+                    <div>
+                        <span class="px-3 py-1 bg-[#faeee7] text-[#33272a] text-xs rounded-full font-semibold block mb-1">
+                            ${professionNames[prof.profession_type] || prof.profession_type}
+                        </span>
+                        <span class="text-xs text-[#594a4e]">${prof.specialization}</span>
+                    </div>
                 </td>
                 <td class="px-6 py-4">
                     <div class="text-sm">
@@ -1136,9 +1160,11 @@
                     <span class="px-3 py-1 rounded-full text-xs font-semibold ${
                         prof.status === 'active' 
                             ? 'bg-[#c3f0ca] text-[#33272a]' 
-                            : 'bg-[#ffc6c7] text-[#33272a]'
+                            : prof.status === 'on-leave'
+                            ? 'bg-[#ffc6c7] text-[#33272a]'
+                            : 'bg-gray-200 text-gray-700'
                     }">
-                        ${prof.status.charAt(0).toUpperCase() + prof.status.slice(1)}
+                        ${prof.status.charAt(0).toUpperCase() + prof.status.slice(1).replace('-', ' ')}
                     </span>
                 </td>
                 <td class="px-6 py-4">
@@ -1161,6 +1187,7 @@
         lucide.createIcons();
     }
 
+    // Updated filter to include profession type
     function filterProfessionals() {
         const searchTerm = document.getElementById('professionalSearch').value.toLowerCase();
         const specializationFilter = document.getElementById('specializationFilter').value;
@@ -1170,7 +1197,8 @@
             const matchesSearch = !searchTerm || 
                 prof.full_name.toLowerCase().includes(searchTerm) ||
                 prof.email.toLowerCase().includes(searchTerm) ||
-                prof.specialization.toLowerCase().includes(searchTerm);
+                prof.specialization.toLowerCase().includes(searchTerm) ||
+                prof.profession_type.toLowerCase().includes(searchTerm);
             
             const matchesSpecialization = !specializationFilter || prof.specialization === specializationFilter;
             const matchesStatus = !statusFilter || prof.status === statusFilter;
@@ -1189,15 +1217,87 @@
         document.getElementById('active-professionals').textContent = activeProfs;
     }
 
+    // Specialization options by profession type
+    const specializationOptions = {
+        'medical-doctor': [
+            'General Medicine'
+        ],
+        'dentist': [
+            'General Dentistry'
+
+        ],
+        'immunization-doctor': [
+            'Immunization & Public Health',
+            'Infectious Disease Prevention',
+            'Vaccine Administration',
+        ],
+        'mental-health-doctor': [
+            'Psychiatry',
+            'Clinical Psychology',
+            'Counseling Psychology',
+            'Child Psychology',
+            'Behavioral Therapy'
+        ],
+        'medical-technologist': [
+            'Hematology',
+            'Clinical Chemistry',
+            'Microbiology',
+            'Immunology',
+            'Blood Banking'
+        ]
+    };
+
+    // Help text for profession types
+    const professionTypeHelpText = {
+        'medical-doctor': 'Provides general and specialized medical care',
+        'dentist': 'Provides dental and oral health services',
+        'immunization-doctor': 'Specializes in vaccination and immunization programs',
+        'mental-health-doctor': 'Provides mental health counseling and psychiatric services',
+        'medical-technologist': 'Performs laboratory tests and diagnostics'
+    };
+
+    // Update specialization options when profession type changes
+    function updateSpecializationOptions() {
+        const professionType = document.getElementById('profProfessionType').value;
+        const specializationSelect = document.getElementById('profSpecialization');
+        const helpText = document.getElementById('professionTypeHelp');
+        
+        if (!professionType) {
+            specializationSelect.innerHTML = '<option value="">First select profession type</option>';
+            helpText.textContent = 'Select the professional\'s medical specialty area';
+            return;
+        }
+        
+        // Update help text
+        helpText.textContent = professionTypeHelpText[professionType] || '';
+        
+        // Get specialization options for this profession type
+        const options = specializationOptions[professionType] || [];
+        
+        // Populate specialization dropdown
+        specializationSelect.innerHTML = '<option value="">Select Specialization</option>' +
+            options.map(spec => `<option value="${spec}">${spec}</option>`).join('');
+        
+        lucide.createIcons();
+    }
+
+    // Open Add Professional Modal
     function openAddProfessionalModal() {
         currentEditProfessionalId = null;
         document.getElementById('professionalModalTitle').textContent = 'Add New Professional';
         document.getElementById('professionalForm').reset();
         document.getElementById('professionalId').value = '';
         document.getElementById('professionalPasswordGroup').classList.remove('hidden');
+        
+        // Reset specialization dropdown
+        document.getElementById('profSpecialization').innerHTML = '<option value="">First select profession type</option>';
+        document.getElementById('professionTypeHelp').textContent = 'Select the professional\'s medical specialty area';
+        
         document.getElementById('professionalModal').classList.remove('hidden');
+        lucide.createIcons();
     }
 
+    // Edit Professional
     function editProfessional(professional) {
         currentEditProfessionalId = professional.professional_id;
         document.getElementById('professionalModalTitle').textContent = 'Edit Professional';
@@ -1206,8 +1306,13 @@
         document.getElementById('profFullName').value = professional.full_name;
         document.getElementById('profEmail').value = professional.email;
         document.getElementById('profPhone').value = professional.phone || '';
-        document.getElementById('profOfficialId').value = professional.official_id || '';
+        document.getElementById('profOfficialId').value = professional.professional_id || '';
         document.getElementById('profLicense').value = professional.license_number;
+        document.getElementById('profProfessionType').value = professional.profession_type;
+        
+        // Update specialization options before setting value
+        updateSpecializationOptions();
+        
         document.getElementById('profSpecialization').value = professional.specialization;
         document.getElementById('profQualifications').value = professional.qualifications || '';
         document.getElementById('profExperience').value = professional.years_of_experience;
@@ -1216,8 +1321,11 @@
         
         document.getElementById('professionalPasswordGroup').classList.add('hidden');
         document.getElementById('professionalModal').classList.remove('hidden');
+        
+        lucide.createIcons();
     }
 
+    // Close Professional Modal
     function closeProfessionalModal() {
         document.getElementById('professionalModal').classList.add('hidden');
         document.getElementById('professionalForm').reset();
@@ -1262,10 +1370,11 @@
                 const email = document.getElementById('profEmail').value.trim();
                 const phone = document.getElementById('profPhone').value.trim();
                 const license = document.getElementById('profLicense').value.trim();
+                const professionType = document.getElementById('profProfessionType').value;
                 const specialization = document.getElementById('profSpecialization').value;
                 const experience = document.getElementById('profExperience').value;
                 
-                if (!fullName || !email || !phone || !license || !specialization || !experience) {
+                if (!fullName || !email || !phone || !license || !professionType || !specialization || !experience) {
                     showToast('Please fill in all required fields', 'error');
                     return;
                 }
@@ -1275,6 +1384,7 @@
                     email: email,
                     phone: phone,
                     license_number: license,
+                    profession_type: professionType,
                     specialization: specialization,
                     qualifications: document.getElementById('profQualifications').value.trim(),
                     years_of_experience: parseInt(experience),
