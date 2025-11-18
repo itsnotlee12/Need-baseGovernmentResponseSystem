@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Request - Citizen Portal{% endblock %}
+
+{% block content %}
+<!-- Top Bar -->
+<div class="bg-[#33272a] text-white py-2 px-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span>Logged in as: {{ user_email }}</span>
+        </div>
+        <button onclick="logout()" class="px-4 py-1 bg-[#ff8ba7] text-[#33272a] font-semibold rounded hover:bg-[#ffc6c7] transition-colors">
+            Logout
+        </button>
+    </div>
+</div>
+
+<div class="min-h-screen bg-[#faeee7] p-6">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-4xl mx-auto border-2 border-[#ffc6c7]">
+        <div class="mb-6">
+            <a href="/citizen/dashboard" class="text-[#ff8ba7] hover:text-[#33272a] mb-4 inline-block font-semibold">
+                ← Back to Dashboard
+            </a>
+            <h2 class="mb-2 text-[#33272a]">Submit Assistance Request</h2>
+            <p class="text-[#594a4e]">
+                Please provide detailed information to help us prioritize and respond to your needs effectively.
+            </p>
+        </div>
+
+        <form id="requestForm">
+            <!-- Personal Information -->
+            <div class="mb-6">
+                <h3 class="mb-4 flex items-center gap-2 text-[#33272a]">
+                    <i data-lucide="users" class="w-5 h-5 text-[#ff8ba7]"></i>
+                    Personal Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Full Name *</label>
+                        <input type="text" id="citizenName" required
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                            placeholder="Enter your full name" />
+                    </div>
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Phone Number *</label>
+                        <input type="tel" id="phone" required
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                            placeholder="+1-555-0000" />
+                    </div>
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Email Address *</label>
+                        <input type="email" id="email" required value="{{ user_email }}" readonly
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded bg-[#faeee7]" />
+                    </div>
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Number of People Affected *</label>
+                        <input type="number" id="peopleAffected" required min="1" value="1"
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]" />
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-[#33272a] mb-2 flex items-center gap-2 font-semibold">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-[#ff8ba7]"></i>
+                        Address/Location *
+                    </label>
+                    <input type="text" id="address" required
+                        class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="Street address, district, landmark" />
+                </div>
+            </div>
+
+            <!-- Need Details -->
+            <div class="mb-6">
+                <h3 class="mb-4 flex items-center gap-2 text-[#33272a]">
+                    <i data-lucide="file-text" class="w-5 h-5 text-[#ff8ba7]"></i>
+                    Need Details
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Type of Need *</label>
+                        <select id="needType" required onchange="updateSpecificationOptions()"
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]">
+                            <option value="">Select Type of Need</option>
+                            <option value="medical">Medical</option>
+                            <option value="dental-services">Dental Services</option>
+                            <option value="immunization">Immunization</option>
+                            <option value="laboratory">Laboratory and Diagnostics</option>
+                            <option value="mental-health">Mental Health</option>
+                            <option value="sanitary-inspection">Sanitary Inspection</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Specification Dropdown (Dynamic) -->
+                    <div id="specificationContainer" style="display: none;">
+                        <label class="block text-[#33272a] mb-2 font-semibold">Specification *</label>
+                        <select id="specification"
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]">
+                            <option value="">Select Specification</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[#33272a] mb-2 font-semibold">Severity Level *</label>
+                        <select id="severity" required
+                            class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]">
+                            <option value="critical">🔴 Critical - Life-threatening</option>
+                            <option value="urgent">🟠 Urgent - Needs attention within 24 hours</option>
+                            <option value="moderate" selected>🟡 Moderate - Important but not urgent</option>
+                            <option value="low">🔵 Low - Can wait a few days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-[#33272a] mb-2 font-semibold">Detailed Description *</label>
+                    <textarea id="description" required rows="4"
+                        class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="Please describe your situation in detail. Include what happened, what you need, and why it's urgent."></textarea>
+                </div>
+            </div>
+
+            <!-- Vulnerability Groups -->
+            <div class="mb-6">
+                <h3 class="mb-2 flex items-center gap-2 text-[#33272a]">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-[#ff8ba7]"></i>
+                    Vulnerability Information
+                </h3>
+                <p class="text-[#594a4e] mb-3">Select all that apply to help us prioritize your request:</p>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <button type="button" onclick="toggleVulnerability('student', this)"
+                        class="p-3 border-2 border-[#ffc6c7] rounded hover:border-[#ff8ba7] transition-all text-left vulnerability-btn text-[#33272a]"
+                        data-group="student">
+                        Student
+                    </button>
+                    <button type="button" onclick="toggleVulnerability('children', this)"
+                        class="p-3 border-2 border-[#ffc6c7] rounded hover:border-[#ff8ba7] transition-all text-left vulnerability-btn text-[#33272a]"
+                        data-group="children">
+                        Children in household
+                    </button>
+                    <button type="button" onclick="toggleVulnerability('elderly', this)"
+                        class="p-3 border-[#ffc6c7] rounded hover:border-[#ff8ba7] transition-all text-left vulnerability-btn text-[#33272a]"
+                        data-group="elderly">
+                        Elderly (65+)
+                    </button>
+                    <button type="button" onclick="toggleVulnerability('disabled', this)"
+                        class="p-3 border-2 border-[#ffc6c7] rounded hover:border-[#ff8ba7] transition-all text-left vulnerability-btn text-[#33272a]"
+                        data-group="disabled">
+                        Person with disability
+                    </button>
+                    <button type="button" onclick="toggleVulnerability('pregnant', this)"
+                        class="p-3 border-2 border-[#ffc6c7] rounded hover:border-[#ff8ba7] transition-all text-left vulnerability-btn text-[#33272a]"
+                        data-group="pregnant">
+                        Pregnant woman
+                    </button>
+                </div>
+            </div>
+                
+            <!-- Special Circumstances -->
+            <div class="mb-6">
+                <label class="block text-[#33272a] mb-2 font-semibold">Special Circumstances (Optional)</label>
+                <textarea id="specialCircumstances" rows="3"
+                    class="w-full px-4 py-2 border-2 border-[#ffc6c7] rounded focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                    placeholder="Any additional information that might help prioritize your request (medical conditions, mobility issues, etc.)"></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <a href="/citizen/dashboard"
+                    class="flex-1 px-6 py-3 border-2 border-[#ffc6c7] text-[#33272a] font-semibold rounded-lg hover:bg-[#faeee7] transition-colors text-center">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-[#ff8ba7] text-[#33272a] font-semibold rounded-lg hover:bg-[#ffc6c7] transition-colors">
+                    Submit Request
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let selectedVulnerabilities = [];
+    
+    // Specification options based on need type
+    const specificationOptions = {
+        'medical': [
+            { value: 'general-consultation', label: 'General Consultation' }
+        ],
+        'dental-services': [
+            { value: 'tooth-extraction', label: 'Tooth Extraction' },
+            { value: 'cleaning', label: 'Cleaning' }
+        ],
+        'immunization': [
+            { value: 'animal-bite', label: 'Animal Bite' },
+            { value: 'anti-tetanus', label: 'Anti-Tetanus' }
+        ],
+        'laboratory': [
+            { value: 'hematology', label: 'Hematology' },
+            { value: 'blood-chemistry', label: 'Blood Chemistry' },
+            { value: 'hiv', label: 'HIV' },
+            { value: 'radiology', label: 'Radiology' },
+            { value: 'other-lab', label: 'Other' }
+        ],
+        'mental-health': [],  // No specifications needed for mental health
+        'sanitary-inspection': []  // No specifications needed for sanitary inspection
+    };
+    
+    function updateSpecificationOptions() {
+        const needType = document.getElementById('needType').value;
+        const specContainer = document.getElementById('specificationContainer');
+        const specSelect = document.getElementById('specification');
+        
+        // Clear existing options
+        specSelect.innerHTML = '<option value="">Select Specification</option>';
+        
+        // Show/hide specification dropdown based on need type
+        if (specificationOptions[needType] && specificationOptions[needType].length > 0) {
+            specContainer.style.display = 'block';
+            specSelect.required = true;
+            
+            // Add options for selected need type
+            specificationOptions[needType].forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.label;
+                specSelect.appendChild(opt);
+            });
+        } else {
+            specContainer.style.display = 'none';
+            specSelect.required = false;
+            specSelect.value = '';  // Clear value
+        }
+    }
+    
+    function logout() {
+        fetch('/api/logout', { method: 'POST' }).then(() => {
+            window.location.href = '/';
+        });
+    }
+    
+    function toggleVulnerability(group, btn) {
+        const index = selectedVulnerabilities.indexOf(group);
+        if (index > -1) {
+            selectedVulnerabilities.splice(index, 1);
+            btn.classList.remove('border-[#ff8ba7]', 'bg-[#ffc6c7]');
+            btn.classList.add('border-[#ffc6c7]');
+        } else {
+            selectedVulnerabilities.push(group);
+            btn.classList.remove('border-[#ffc6c7]');
+            btn.classList.add('border-[#ff8ba7]', 'bg-[#ffc6c7]');
+        }
+    }
+    
+    document.getElementById('requestForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get specification value - will be empty string if not shown
+        const specificationValue = document.getElementById('specification').value || null;
+        
+        // Get special circumstances - will be empty string or null if not provided
+        const specialCircumstances = document.getElementById('specialCircumstances').value.trim() || null;
+        
+        const formData = {
+            citizenName: document.getElementById('citizenName').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            location: document.getElementById('address').value,  // Send as string
+            needType: document.getElementById('needType').value,
+            specification: specificationValue,  // Will be null if not applicable
+            severity: document.getElementById('severity').value,
+            peopleAffected: parseInt(document.getElementById('peopleAffected').value),
+            description: document.getElementById('description').value,
+            vulnerabilityGroup: selectedVulnerabilities.length > 0 ? selectedVulnerabilities : ['none'],
+            specialCircumstances: specialCircumstances,  // Will be null if empty
+            hasEvidence: false
+        };
+        
+        console.log('Submitting form data:', formData);
+        
+        try {
+            const response = await fetch('/api/requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Request submitted successfully! Redirecting to dashboard...');
+                window.location.href = '/citizen/dashboard';
+            } else {
+                alert('Error: ' + (data.error || 'Error submitting request. Please try again.'));
+                console.error('Server error:', data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Network error submitting request. Please check your connection and try again.');
+        }
+    });
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}
