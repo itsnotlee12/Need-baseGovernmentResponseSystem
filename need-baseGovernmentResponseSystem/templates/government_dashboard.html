@@ -181,12 +181,12 @@
                         <select id="filterNeedType" onchange="applyFilters()"
                             class="w-full px-4 py-2.5 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent bg-white text-[#33272a] font-medium">
                             <option value="all">All Types</option>
-                            <option value="food">Food</option>
-                            <option value="shelter">Shelter</option>
                             <option value="medical">Medical</option>
-                            <option value="water">Water</option>
-                            <option value="educational">Educational</option>
+                            <option value="dental-services">Dental Services</option>
+                            <option value="immunization">Immunization</option>
+                            <option value="laboratory">Laboratory and Diagnostics</option>
                             <option value="mental-health">Mental Health</option>
+                            <option value="sanitary-inspection">Sanitary Inspection</option>
                         </select>
                     </div>
                 </div>
@@ -415,15 +415,12 @@
     
     function getNeedTypeLabel(needType) {
         const labels = {
-            'food': '🍽️ Food',
-            'shelter': '🏠 Shelter',
-            'medical': '🏥 Medical',
-            'water': '💧 Water',
-            'educational': '📚 Educational',
-            'mental-health': '🧠 Mental Health',
-            'clothing': '👕 Clothing',
-            'financial': '💰 Financial',
-            'other': '📦 Other'
+            'Medical': 'Medical',
+            'Dental Services': 'Dental Services',
+            'Immunization': 'Immunization',
+            'Laboratory and Diagnostics': 'Laboratory and Diagnostics',
+            'Mental Health': 'Mental Health',
+            'Sanitary Inspection': 'Sanitary Inspection'
         };
         return labels[needType] || needType;
     }
