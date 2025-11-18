@@ -969,13 +969,51 @@ def api_login():
         user_data = None
         
         if role == 'citizen':
-            # Check citizens in users_db
-            if email in users_db.get('citizens', {}):
+            # Check citizens in DATABASE first, then fall back to users_db
+            conn = get_db_connection()
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        SELECT citizen_id, full_name, password_hash, phone, is_active
+                        FROM citizens
+                        WHERE email = %s
+                    """, (email,))
+                    citizen_record = cur.fetchone()
+                    
+                    if citizen_record:
+                        citizen_id, citizen_name, stored_hash, phone, is_active = citizen_record
+                        
+                        if not is_active:
+                            cur.close()
+                            conn.close()
+                            log_audit_action('LOGIN_FAILED', email, 'Account is inactive', 'USER', email)
+                            return jsonify({'success': False, 'error': 'Account is inactive. Please contact support.'}), 403
+                        
+                        if stored_hash and verify_password(password, stored_hash):
+                            authenticated = True
+                            name = citizen_name
+                            print(f"✓ Citizen authenticated from database: {name} ({email})")
+                        else:
+                            print(f"✗ Password verification failed for citizen: {email}")
+                    else:
+                        print(f"✗ Citizen not found in database: {email}")
+                    
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Database error during citizen login: {e}")
+                    if conn:
+                        conn.close()
+            
+            # Fall back to in-memory cache if database check didn't authenticate
+            if not authenticated and email in users_db.get('citizens', {}):
                 stored_hash = users_db['citizens'][email].get('password_hash')
                 if stored_hash and verify_password(password, stored_hash):
                     authenticated = True
                     user_data = users_db['citizens'][email]
                     name = user_data.get('name', name)
+                    print(f"✓ Citizen authenticated from cache: {name} ({email})")
         
         elif role == 'government':
             # Initialize user_position
