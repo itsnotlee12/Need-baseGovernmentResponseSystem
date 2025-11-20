@@ -1,219 +1,272 @@
-{% extends "base.html" %}
+// {% extends "base.html" %}
 
 {% block title %}Citizen Login - PeopleFirst Priority{% endblock %}
 
 {% block content %}
+
 <div class="min-h-screen bg-[#faeee7] flex items-center justify-center p-4">
-    <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <!-- Left Side - Image and Info -->
-        <div class="relative bg-[#ff8ba7] p-12 flex flex-col justify-between text-[#33272a]">
-            <div>
-                <a href="/" class="flex items-center gap-2 text-[#33272a]/80 hover:text-[#33272a] mb-8 transition-colors">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>Back to Home</span>
-                </a>
-                
-                <div class="mb-8">
-                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center mb-4">
-                        <i data-lucide="user" class="w-8 h-8 text-[#ff8ba7]"></i>
-                    </div>
-                    <h2 class="mb-3 text-white">Citizen Portal</h2>
-                    <p class="text-[#33272a]">
-                        Access your assistance requests, track status updates, and submit new requests
-                        for any type of support - available 24/7 for all your needs.
-                    </p>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <span>✓</span>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1 text-white">Voice Your Needs</p>
-                            <p class="text-[#33272a] text-sm">
-                                Submit assistance requests directly to government officials anytime
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <span>✓</span>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1 text-white">Real-Time Tracking</p>
-                            <p class="text-[#33272a] text-sm">
-                                Monitor your request status and estimated response times
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                            <span>✓</span>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1 text-white">Fair Prioritization</p>
-                            <p class="text-[#33272a] text-sm">
-                                Automatic ranking based on severity and urgency
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <img 
-                    src="https://images.unsplash.com/photo-1634839593004-667d278bac49?w=500" 
-                    alt="Community help"
-                    class="w-full h-48 object-cover rounded-lg opacity-80"
-                />
-            </div>
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-12">
+        <div class="mb-8 text-center">
+            <a href="/" class="inline-flex items-center gap-2 text-[#594a4e] hover:text-[#33272a] mb-6 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back to Home</span>
+            </a>
+            <h2 class="mb-2 text-[#33272a]" id="form-title">Welcome Back</h2>
+            <p class="text-[#594a4e]" id="form-subtitle">Sign in to access your dashboard</p>
         </div>
 
-        <!-- Right Side - Login Form -->
-        <div class="p-12">
-            <div class="mb-8">
-                <h2 class="mb-2 text-[#33272a]" id="form-title">Welcome Back</h2>
-                <p class="text-[#594a4e]" id="form-subtitle">Sign in to access your dashboard</p>
+        <form id="loginForm" class="space-y-6">
+            <div id="nameField" style="display: none;">
+                <label class="block text-[#33272a] mb-2 font-semibold">Full Name</label>
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="Enter your full name"
+                    />
+                </div>
             </div>
 
-            <form id="loginForm" class="space-y-6">
-                <div id="nameField" style="display: none;">
-                    <label class="block text-[#33272a] mb-2 font-semibold">Full Name</label>
-                    <div class="relative">
-                        <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
-                            placeholder="Enter your full name"
-                        />
-                    </div>
+            <div id="phoneField" style="display: none;">
+                <label class="block text-[#33272a] mb-2 font-semibold">Phone Number</label>
+                <div class="relative">
+                    <i data-lucide="phone" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="+1-555-0000"
+                    />
                 </div>
+            </div>
 
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Email Address</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="your.email@example.com"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Password</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                        placeholder="Enter your password"
+                    />
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end text-sm">
+                <button type="button" id="forgotPasswordBtn" class="text-[#594a4e] hover:text-[#33272a]">
+                    Forgot password?
+                </button>
+            </div>
+
+            <button
+                type="submit"
+                id="submitBtn"
+                class="w-full py-3 bg-[#ff8ba7] text-[#33272a] font-semibold rounded-lg hover:bg-[#ffc6c7] transition-colors"
+            >
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <button
+                type="button"
+                id="toggleMode"
+                class="text-[#594a4e] hover:text-[#33272a]"
+            >
+                <span id="toggleText">
+                    Don't have an account? <span class="text-[#ff8ba7] font-semibold">Register now</span>
+                </span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Popup -->
+<div id="customPopup" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md mx-4 border-2 border-[#ffc6c7]">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="popupTitle" class="text-lg font-semibold text-[#33272a]">Notification</h3>
+                <button onclick="closePopup()" class="text-[#594a4e] hover:text-[#33272a] text-2xl">&times;</button>
+            </div>
+            <p id="popupMessage" class="text-[#594a4e] mb-4"></p>
+            <button onclick="closePopup()" class="w-full px-4 py-2 bg-[#ff8ba7] text-[#33272a] font-semibold rounded hover:bg-[#ffc6c7] transition-colors">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Forgot Password -->
+<div id="forgotPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-12 border-2 border-[#ffc6c7]">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-[#33272a]">Reset Password</h3>
+                <button onclick="closeForgotPasswordModal()" class="text-[#594a4e] hover:text-[#33272a] text-2xl">&times;</button>
+            </div>
+            <p class="text-[#594a4e] mb-4">Enter your email address.</p>
+            <form id="forgotPasswordForm" class="space-y-4">
                 <div>
                     <label class="block text-[#33272a] mb-2 font-semibold">Email Address</label>
                     <div class="relative">
                         <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
                         <input
                             type="email"
-                            id="email"
-                            name="email"
+                            id="resetEmail"
+                            name="resetEmail"
                             required
                             class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
                             placeholder="your.email@example.com"
                         />
                     </div>
                 </div>
+                <button
+                    type="submit"
+                    class="w-full py-3 bg-[#ff8ba7] text-[#33272a] font-semibold rounded-lg hover:bg-[#ffc6c7] transition-colors"
+                >
+                    Continue
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 
+<!-- Change Password -->
+<div id="changePasswordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-12 border-2 border-[#ffc6c7]">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-[#33272a]">Change Password</h3>
+                <button onclick="closeChangePasswordModal()" class="text-[#594a4e] hover:text-[#33272a] text-2xl">&times;</button>
+            </div>
+            <p class="text-[#594a4e] mb-4">Enter your new password.</p>
+            <form id="changePasswordForm" class="space-y-4">
+                <input type="hidden" id="changeEmail" name="email" value="">
                 <div>
-                    <label class="block text-[#33272a] mb-2 font-semibold">Password</label>
+                    <label class="block text-[#33272a] mb-2 font-semibold">New Password</label>
                     <div class="relative">
                         <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
                         <input
                             type="password"
-                            id="password"
+                            id="newPassword"
                             name="password"
                             required
                             class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
-                            placeholder="Enter your password"
+                            placeholder="Enter new password"
                         />
                     </div>
                 </div>
-
-                <div id="rememberMeSection" class="flex items-center justify-between text-sm">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" class="w-4 h-4 rounded border-[#ffc6c7]" />
-                        <span class="text-[#594a4e]">Remember me</span>
-                    </label>
-                    <button type="button" class="text-[#ff8ba7] hover:text-[#33272a]">
-                        Forgot password?
-                    </button>
+                <div>
+                    <label class="block text-[#33272a] mb-2 font-semibold">Confirm New Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#594a4e]"></i>
+                        <input
+                            type="password"
+                            id="confirmNewPassword"
+                            name="confirmPassword"
+                            required
+                            class="w-full pl-11 pr-4 py-3 border-2 border-[#ffc6c7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ff8ba7] focus:border-[#ff8ba7]"
+                            placeholder="Confirm new password"
+                        />
+                    </div>
                 </div>
-
                 <button
                     type="submit"
-                    id="submitBtn"
                     class="w-full py-3 bg-[#ff8ba7] text-[#33272a] font-semibold rounded-lg hover:bg-[#ffc6c7] transition-colors"
                 >
-                    Sign In
+                    Change Password
                 </button>
             </form>
-
-            <div class="mt-6 text-center">
-                <button
-                    type="button"
-                    id="toggleMode"
-                    class="text-[#594a4e] hover:text-[#33272a]"
-                >
-                    <span id="toggleText">
-                        Don't have an account? <span class="text-[#ff8ba7] font-semibold">Register now</span>
-                    </span>
-                </button>
-            </div>
-
         </div>
     </div>
 </div>
 
 <script>
     let isNewUser = false;
-    
+
     document.getElementById('toggleMode').addEventListener('click', function() {
         isNewUser = !isNewUser;
-        
+
         const nameField = document.getElementById('nameField');
-        const rememberMeSection = document.getElementById('rememberMeSection');
+        const phoneField = document.getElementById('phoneField');
         const formTitle = document.getElementById('form-title');
         const formSubtitle = document.getElementById('form-subtitle');
         const submitBtn = document.getElementById('submitBtn');
         const toggleText = document.getElementById('toggleText');
         const nameInput = document.getElementById('name');
-        
+        const phoneInput = document.getElementById('phone');
+
         if (isNewUser) {
             nameField.style.display = 'block';
+            phoneField.style.display = 'block';
             nameInput.required = true;
-            rememberMeSection.style.display = 'none';
+            phoneInput.required = true;
             formTitle.textContent = 'Create Account';
             formSubtitle.textContent = 'Register to submit assistance requests';
             submitBtn.textContent = 'Create Account';
             toggleText.innerHTML = 'Already have an account? <span class="text-[#ff8ba7] font-semibold">Sign in</span>';
         } else {
             nameField.style.display = 'none';
+            phoneField.style.display = 'none';
             nameInput.required = false;
-            rememberMeSection.style.display = 'flex';
+            phoneInput.required = false;
             formTitle.textContent = 'Welcome Back';
             formSubtitle.textContent = 'Sign in to access your dashboard';
             submitBtn.textContent = 'Sign In';
             toggleText.innerHTML = 'Don\'t have an account? <span class="text-[#ff8ba7] font-semibold">Register now</span>';
         }
-        
+
         lucide.createIcons();
     });
-    
+
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const name = document.getElementById('name').value || 'Citizen User';
-        
+        const phone = document.getElementById('phone').value || '';
+
         if (!email || !password) {
-            alert('Please enter both email and password');
+            showPopup('Validation Error', 'Please enter both email and password');
             return;
         }
-        
+
         // Check if this is registration or login
         if (isNewUser) {
             // Registration
             if (!document.getElementById('name').value) {
-                alert('Please enter your full name');
+                showPopup('Validation Error', 'Please enter your full name');
                 return;
             }
-            
+            if (!document.getElementById('phone').value) {
+                showPopup('Validation Error', 'Please enter your phone number');
+                return;
+            }
+
             try {
                 const response = await fetch('/api/register/citizen', {
                     method: 'POST',
@@ -223,22 +276,23 @@
                     body: JSON.stringify({
                         email: email,
                         password: password,
-                        name: name
+                        name: name,
+                        phone: phone
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
-                    alert('Registration successful! Please login with your credentials.');
-                    // Switch to login mode
-                    document.getElementById('toggleMode').click();
+                    showPopup('Success', 'Registration successful!', function() {
+                        window.location.href = '/citizen/login';
+                    });
                 } else {
-                    alert(data.error || 'Registration failed. Please try again.');
+                    showPopup('Registration Failed', data.error || 'Registration failed. Please try again.');
                 }
             } catch (error) {
                 console.error('Registration error:', error);
-                alert('Registration failed. Please try again.');
+                showPopup('Registration Failed', 'Registration failed. Please try again.');
             }
         } else {
             // Login
@@ -255,18 +309,159 @@
                         name: name
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     window.location.href = '/citizen/dashboard';
                 } else {
-                    alert(data.error || 'Login failed. Please check your credentials.');
+                    showPopup('Login Failed', data.error || 'Login failed. Please check your credentials.');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                alert('Login failed. Please try again.');
+                showPopup('Login Failed', 'Login failed. Please try again.');
             }
+        }
+    });
+
+    // Custom popup
+    function showPopup(title, message, callback = null) {
+        document.getElementById('popupTitle').textContent = title;
+        document.getElementById('popupMessage').textContent = message;
+        const popup = document.getElementById('customPopup');
+
+        popup.classList.remove('hidden');
+        popup.callback = callback;
+    }
+
+    function closePopup() {
+        const popup = document.getElementById('customPopup');
+        popup.classList.add('hidden');
+
+        if (typeof popup.callback === 'function') {
+            popup.callback();
+        }
+
+        popup.callback = null;
+    }
+
+    // Forgot password
+    function openForgotPasswordModal() {
+        document.getElementById('forgotPasswordModal').classList.remove('hidden');
+    }
+
+    function closeForgotPasswordModal() {
+        document.getElementById('forgotPasswordModal').classList.add('hidden');
+        document.getElementById('forgotPasswordForm').reset();
+    }
+
+    // Change password
+    function openChangePasswordModal(email) {
+        document.getElementById('changeEmail').value = email;
+        document.getElementById('changePasswordModal').classList.remove('hidden');
+    }
+
+    function closeChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.add('hidden');
+        document.getElementById('changePasswordForm').reset();
+    }
+
+    document.getElementById('forgotPasswordBtn').addEventListener('click', function() {
+        openForgotPasswordModal();
+    });
+
+    // Forgot password form submission
+    document.getElementById('forgotPasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('resetEmail').value.trim();
+
+        if (!email) {
+            showPopup('Error', 'Please enter your email address.');
+            return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showPopup('Error', 'Please enter a valid email address.');
+            return;
+        }
+
+        try {
+            console.log('Checking email:', email); // Debug log
+
+            const response = await fetch('/api/check-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    role: 'citizen'  // Add role to help backend identify the correct table
+                })
+            });
+
+            console.log('Response status:', response.status); // Debug log
+
+            const data = await response.json();
+            console.log('Response data:', data); // Debug log
+
+            if (response.ok && data.success) {
+                closeForgotPasswordModal();
+                openChangePasswordModal(email);  // Proceed to change password modal
+            } else {
+                showPopup('Error', data.error || data.message || 'Email not found. Please check and try again.');
+            }
+        } catch (error) {
+            console.error('Check email error:', error);
+            showPopup('Error', 'Failed to check email. Please try again.');
+        }
+    });
+
+    // Change password form submission
+    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('changeEmail').value;
+        const password = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+        if (password !== confirmPassword) {
+            showPopup('Error', 'Passwords do not match. Please try again.');
+            return;
+        }
+
+        if (password.length < 8) {
+            showPopup('Error', 'Password must be at least 8 characters long.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeChangePasswordModal();
+                showPopup('Success', 'Password changed successfully! You can now log in with your new password.', function() {
+                    window.location.href = '/citizen/login';
+                });
+            } else {
+                showPopup('Error', data.error || 'Failed to change password.');
+            }
+        } catch (error) {
+            console.error('Change password error:', error);
+            showPopup('Error', 'Failed to change password. Please try again.');
         }
     });
 </script>

@@ -1,210 +1,134 @@
-{% extends "base.html" %}
+// {% extends "base.html" %}
 
 {% block title %}Professional Login - PeopleFirst Priority{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <!-- Left Side - Image and Info -->
-        <div class="relative bg-gradient-to-br from-blue-600 to-cyan-600 p-12 flex flex-col justify-between text-white">
-            <div>
-                <a href="/" class="flex items-center gap-2 text-white/80 hover:text-white mb-8 transition-colors">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                    <span>Back to Home</span>
-                </a>
-                
-                <div class="mb-8">
-                    <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center mb-4">
-                        <i data-lucide="stethoscope" class="w-8 h-8 text-white"></i>
-                    </div>
-                    <h2 class="mb-3 text-white">Mental Health Professional Portal</h2>
-                    <p class="text-blue-100">
-                        Access your appointment dashboard, manage patient consultations, and provide 
-                        essential mental health support services.
-                    </p>
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-12">
+        <div class="mb-8 text-center">
+            <a href="/" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-6 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Back to Home</span>
+            </a>
+            <div class="flex items-center justify-center gap-3 mb-3">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="user-check" class="w-6 h-6 text-blue-600"></i>
                 </div>
-
-                <div class="space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="calendar-check" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1">Appointment Management</p>
-                            <p class="text-blue-200 text-sm">
-                                View and confirm scheduled appointments with patients
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="bell" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1">Real-Time Notifications</p>
-                            <p class="text-blue-200 text-sm">
-                                Get instant alerts for new appointment requests
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="users" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <p class="font-semibold mb-1">Patient Dashboard</p>
-                            <p class="text-blue-200 text-sm">
-                                Track consultation history and patient progress
-                            </p>
-                        </div>
-                    </div>
+                <div>
+                    <h2 class="mb-0 text-[#33272a]">Professional Portal</h2>
+                    <p class="text-sm text-[#594a4e]">Mental Health Services</p>
                 </div>
             </div>
+            <p class="text-[#594a4e]">Sign in to access your appointment dashboard</p>
+        </div>
 
-            <div class="mt-8">
-                <img 
-                    src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=500" 
-                    alt="Mental health professional"
-                    class="w-full h-48 object-cover rounded-lg opacity-90"
-                />
+        <!-- Error message display -->
+        <div id="errorMessage" class="hidden mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+            <div class="flex items-center gap-2 text-red-700">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                <span id="errorText" class="font-semibold"></span>
             </div>
         </div>
 
-        <!-- Right Side - Login Form -->
-        <div class="p-12">
-            <div class="mb-8">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <i data-lucide="user-check" class="w-6 h-6 text-blue-600"></i>
-                    </div>
-                    <div>
-                        <h2 class="mb-0 text-[#33272a]">Professional Portal</h2>
-                        <p class="text-sm text-[#594a4e]">Mental Health Services</p>
-                    </div>
-                </div>
-                <p class="text-[#594a4e]">Sign in to access your appointment dashboard</p>
-            </div>
-
-            <!-- Error message display -->
-            <div id="errorMessage" class="hidden mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
-                <div class="flex items-center gap-2 text-red-700">
-                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    <span id="errorText" class="font-semibold"></span>
-                </div>
-            </div>
-
-            <form id="professionalLoginForm" class="space-y-6">
-                <div>
-                    <label class="block text-[#33272a] mb-2 font-semibold">Full Name</label>
-                    <div class="relative">
-                        <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
-                        <input
-                            type="text"
-                            id="profName"
-                            name="name"
-                            required
-                            class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Dr. John Smith"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[#33272a] mb-2 font-semibold">Email Address</label>
-                    <div class="relative">
-                        <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
-                        <input
-                            type="email"
-                            id="profEmail"
-                            name="email"
-                            required
-                            class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="doctor@mentalhealth.gov"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[#33272a] mb-2 font-semibold">Official ID</label>
-                    <div class="relative">
-                        <i data-lucide="id-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
-                        <input
-                            type="text"
-                            id="profOfficialId"
-                            name="officialId"
-                            required
-                            class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="GOV-0011"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[#33272a] mb-2 font-semibold">Password</label>
-                    <div class="relative">
-                        <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
-                        <input
-                            type="password"
-                            id="profPassword"
-                            name="password"
-                            required
-                            class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter your password"
-                        />
-                    </div>
-                </div>
-
-                <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-                    <p class="text-sm text-blue-900 flex items-center gap-2">
-                        <i data-lucide="building" class="w-5 h-5 text-blue-600"></i>
-                        <span><strong>Department:</strong> Health and Medical Services</span>
-                    </p>
-                    <p class="text-xs text-blue-700 mt-2">
-                        Your department is automatically assigned based on your professional role.
-                    </p>
-                </div>
-
-                <button
-                    type="submit"
-                    id="profLoginButton"
-                    class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                    <i data-lucide="log-in" class="w-5 h-5"></i>
-                    <span>Access Professional Dashboard</span>
-                </button>
-            </form>
-
-            <div class="mt-6">
+        <form id="professionalLoginForm" class="space-y-6">
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Full Name</label>
                 <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-white text-gray-500">Quick Access</span>
-                    </div>
+                    <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
+                    <input
+                        type="text"
+                        id="profName"
+                        name="name"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Dr. John Smith"
+                    />
                 </div>
+            </div>
 
-            <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200">
-                <p class="text-sm text-[#33272a] font-semibold flex items-center gap-2 mb-2">
-                    <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i>
-                    Authorized Mental Health Professionals Only
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Email Address</label>
+                <div class="relative">
+                    <i data-lucide="mail" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
+                    <input
+                        type="email"
+                        id="profEmail"
+                        name="email"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="doctor@mentalhealth.gov"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Official ID</label>
+                <div class="relative">
+                    <i data-lucide="id-card" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
+                    <input
+                        type="text"
+                        id="profOfficialId"
+                        name="officialId"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="GOV-0011"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[#33272a] mb-2 font-semibold">Password</label>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600"></i>
+                    <input
+                        type="password"
+                        id="profPassword"
+                        name="password"
+                        required
+                        class="w-full pl-11 pr-4 py-3 border-2 border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your password"
+                    />
+                </div>
+            </div>
+
+            <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <p class="text-sm text-blue-900 flex items-center gap-2">
+                    <i data-lucide="building" class="w-5 h-5 text-blue-600"></i>
+                    <span><strong>Department:</strong> Health and Medical Services</span>
                 </p>
-                <p class="text-xs text-[#594a4e]">
-                    This portal is exclusively for licensed mental health professionals providing 
-                    consultation services through the government assistance program.
+                <p class="text-xs text-blue-700 mt-2">
+                    Your department is automatically assigned based on your professional role.
                 </p>
             </div>
 
-            <div class="mt-4 text-center">
-                <p class="text-sm text-[#594a4e]">
-                    Government Staff? 
-                    <a href="/government/login" class="text-blue-600 hover:text-blue-700 font-semibold">
-                        Login Here
-                    </a>
-                </p>
-            </div>
+            <button
+                type="submit"
+                id="profLoginButton"
+                class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+                <i data-lucide="log-in" class="w-5 h-5"></i>
+                <span>Access Professional Dashboard</span>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-[#594a4e]">
+                Government Staff?
+                <a href="/government/login" class="text-blue-600 hover:text-blue-700 font-semibold">
+                    Login Here
+                </a>
+            </p>
+        </div>
+
+        <div class="mt-4 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+            <p class="text-sm text-blue-900 font-semibold flex items-center gap-2 mb-2">
+                <i data-lucide="shield-check" class="w-5 h-5 text-blue-600"></i>
+                Authorized Mental Health Professionals Only
+            </p>
+            <p class="text-xs text-blue-700">
+                This portal is exclusively for licensed mental health professionals providing
+                consultation services through the government assistance program.
+            </p>
         </div>
     </div>
 </div>
@@ -216,7 +140,7 @@
         document.getElementById('profEmail').value = 'emily.rodriguez@mentalhealth.gov';
         document.getElementById('profOfficialId').value = 'GOV-0011';
         document.getElementById('profPassword').value = 'password123';
-        
+
         showInfo('Demo credentials loaded: Dr. Emily Rodriguez');
         lucide.createIcons();
     }
@@ -232,7 +156,7 @@
         `;
         document.body.appendChild(infoDiv);
         lucide.createIcons();
-        
+
         setTimeout(() => {
             infoDiv.style.opacity = '0';
             infoDiv.style.transform = 'translateX(100%)';
@@ -246,7 +170,7 @@
         errorText.textContent = message;
         errorDiv.classList.remove('hidden');
         lucide.createIcons();
-        
+
         setTimeout(() => {
             errorDiv.classList.add('hidden');
         }, 5000);
@@ -267,7 +191,7 @@
         `;
         document.body.appendChild(successDiv);
         lucide.createIcons();
-        
+
         setTimeout(() => {
             window.location.href = redirectUrl;
         }, 1000);
@@ -276,32 +200,32 @@
     document.getElementById('professionalLoginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         hideError();
-        
+
         const name = document.getElementById('profName').value.trim();
         const email = document.getElementById('profEmail').value.trim();
         const officialId = document.getElementById('profOfficialId').value.trim();
         const password = document.getElementById('profPassword').value;
         const loginButton = document.getElementById('profLoginButton');
-        
+
         // Validate inputs
         if (!name || !email || !officialId || !password) {
             showError('Please fill in all fields');
             return;
         }
-        
+
         // Email format validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showError('Please enter a valid email address');
             return;
         }
-        
+
         // Show loading state
         const originalButtonText = loginButton.innerHTML;
         loginButton.disabled = true;
         loginButton.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 inline animate-spin mr-2"></i>Authenticating...';
         lucide.createIcons();
-        
+
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
@@ -317,9 +241,9 @@
                     password: password
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 showSuccess(`Welcome ${name}! Redirecting to Professional Dashboard...`, '/professional/dashboard');
             } else {

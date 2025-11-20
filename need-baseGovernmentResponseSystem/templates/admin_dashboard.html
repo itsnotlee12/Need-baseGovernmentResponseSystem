@@ -427,13 +427,14 @@
                                class="w-full pl-10 pr-4 py-3 border-2 border-[#33272a]/20 rounded-xl focus:outline-none focus:border-[#33272a] transition-colors"
                                oninput="filterProfessionals()">
                     </div>
-                    <select id="specializationFilter" onchange="filterProfessionals()" 
+                    <select id="specializationFilter" onchange="filterProfessionals()"
                             class="px-4 py-3 border-2 border-[#33272a]/20 rounded-xl focus:outline-none focus:border-[#33272a] transition-colors">
                         <option value="">All Specializations</option>
-                        <option value="Clinical Psychologist">Clinical Psychologist</option>
-                        <option value="Psychiatrist">Psychiatrist</option>
-                        <option value="Licensed Counselor">Licensed Counselor</option>
-                        <option value="Child Psychologist">Child Psychologist</option>
+                        <option value="Medical Doctor">Medical Doctor</option>
+                        <option value="Dentist">Dentist</option>
+                        <option value="Immunization Doctor">Immunization Doctor</option>
+                        <option value="Mental Health Doctor">Mental Health Doctor</option>
+                        <option value="Medical Technologist">Medical Technologist</option>
                     </select>
                     <select id="statusFilter" onchange="filterProfessionals()" 
                             class="px-4 py-3 border-2 border-[#33272a]/20 rounded-xl focus:outline-none focus:border-[#33272a] transition-colors">
@@ -717,7 +718,7 @@
                         <p class="text-xs text-[#594a4e] mt-1" id="professionTypeHelp">Select the professional's medical specialty area</p>
                     </div>
                     
-                    <!-- Specialization - Updates based on profession type -->
+                    <!-- Specialization -->
                     <div>
                         <label class="block text-sm font-semibold text-[#33272a] mb-2">Specialization *</label>
                         <select id="profSpecialization" required 
@@ -770,8 +771,100 @@
     </div>
 </div>
 
+<!-- ============================================ -->
+<!-- MODAL FOR ALERTS AND CONFIRMS -->
+<!-- ============================================ -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div id="modalContent"></div>
+    </div>
+</div>
+
 <script>
     let currentEditStaffId = null;
+
+    // Universal Modal System
+    function showModal(title, message, type = 'alert') {
+        return new Promise((resolve) => {
+            // Create modal backdrop
+            const modalBackdrop = document.createElement('div');
+            modalBackdrop.id = 'universalModalBackdrop';
+            modalBackdrop.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+
+            // Create modal content
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 overflow-hidden';
+
+            // Icon based on type
+            const iconConfig = {
+                alert: { icon: 'alert-circle', color: 'text-[#ff8906]', bg: 'bg-[#faeee7]' },
+                confirm: { icon: 'help-circle', color: 'text-[#33272a]', bg: 'bg-[#faeee7]' },
+                success: { icon: 'check-circle', color: 'text-[#33272a]', bg: 'bg-[#c3f0ca]' },
+                error: { icon: 'x-circle', color: 'text-[#33272a]', bg: 'bg-[#ffc6c7]' }
+            };
+
+            const config = iconConfig[type] || iconConfig.alert;
+
+            modalContent.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 ${config.bg} p-3 rounded-full">
+                            <i data-lucide="${config.icon}" class="w-6 h-6 ${config.color}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-[#33272a] mb-2">${title}</h3>
+                            <p class="text-sm text-[#594a4e]">${message}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#faeee7] px-6 py-4 flex justify-end space-x-3">
+                    ${type === 'confirm' ? `
+                        <button id="modalCancelBtn" class="px-4 py-2 bg-white text-[#33272a] rounded-lg hover:bg-gray-100 transition-colors font-semibold border border-gray-300">
+                            Cancel
+                        </button>
+                        <button id="modalConfirmBtn" class="px-4 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">
+                            Confirm
+                        </button>
+                    ` : `
+                        <button id="modalOkBtn" class="px-4 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">
+                            OK
+                        </button>
+                    `}
+                </div>
+            `;
+
+            modalBackdrop.appendChild(modalContent);
+            document.body.appendChild(modalBackdrop);
+
+            // Re-initialize lucide icons for the modal
+            lucide.createIcons();
+
+            // Handle button clicks
+            if (type === 'confirm') {
+                document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+                    modalBackdrop.remove();
+                    resolve(true);
+                });
+                document.getElementById('modalCancelBtn').addEventListener('click', () => {
+                    modalBackdrop.remove();
+                    resolve(false);
+                });
+            } else {
+                document.getElementById('modalOkBtn').addEventListener('click', () => {
+                    modalBackdrop.remove();
+                    resolve(true);
+                });
+            }
+
+            // Close on backdrop click
+            modalBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBackdrop) {
+                    modalBackdrop.remove();
+                    resolve(type === 'confirm' ? false : true);
+                }
+            });
+        });
+    }
 
     // Tab switching
     function switchTab(tab) {
@@ -779,28 +872,28 @@
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.add('hidden');
         });
-        
+
         // Remove active state from all tabs
         document.querySelectorAll('.tab-button').forEach(button => {
             button.classList.remove('border-[#33272a]', 'text-[#33272a]', 'font-bold', 'bg-[#faeee7]');
             button.classList.add('border-transparent', 'text-[#594a4e]', 'font-semibold');
         });
-        
+
         // Show selected content
         document.getElementById(`content-${tab}`).classList.remove('hidden');
-        
+
         // Activate selected tab
         const activeTab = document.getElementById(`tab-${tab}`);
         activeTab.classList.remove('border-transparent', 'text-[#594a4e]', 'font-semibold');
         activeTab.classList.add('border-[#33272a]', 'text-[#33272a]', 'font-bold', 'bg-[#faeee7]');
-        
+
         // Load data if needed
         if (tab === 'audit') {
             loadAuditLogs();
         } else if (tab === 'professionals') {
             loadProfessionals();
         }
-        
+
         lucide.createIcons();
     }
 
@@ -812,11 +905,11 @@
         if (subtitle) subtitle.textContent = 'Fill in the details to add a new staff member to the system';
         document.getElementById('staffForm').reset();
         document.getElementById('staffId').value = '';
-        
+
         // Show password field for new staff
         const passwordField = document.getElementById('staffPassword').closest('div.md\\:col-span-2');
         if (passwordField) passwordField.style.display = 'block';
-        
+
         // Reset all permission checkboxes
         document.getElementById('permViewRequests').checked = false;
         document.getElementById('permManageRequests').checked = false;
@@ -825,7 +918,7 @@
         document.getElementById('permManageStaff').checked = false;
         document.getElementById('permViewAuditLogs').checked = false;
         document.getElementById('permSystemSettings').checked = false;
-        
+
         document.getElementById('staffModal').classList.remove('hidden');
         lucide.createIcons();
     }
@@ -835,7 +928,7 @@
         document.getElementById('modalTitle').textContent = 'Edit Staff Member';
         const subtitle = document.querySelector('#staffModal p.text-sm');
         if (subtitle) subtitle.textContent = 'Update the staff member information';
-        
+
         document.getElementById('staffId').value = staff.id;
         document.getElementById('staffFullName').value = staff.fullName;
         document.getElementById('staffEmail').value = staff.email;
@@ -843,11 +936,11 @@
         document.getElementById('staffEmployeeId').value = staff.employeeId;
         document.getElementById('staffDepartment').value = staff.department;
         document.getElementById('staffRole').value = staff.role;
-        
+
         // Hide password field when editing
         const passwordField = document.getElementById('staffPassword').closest('div.md\\:col-span-2');
         if (passwordField) passwordField.style.display = 'none';
-        
+
         // Set permissions if available
         if (staff.permissions) {
             document.getElementById('permViewRequests').checked = staff.permissions.viewRequests || false;
@@ -858,7 +951,7 @@
             document.getElementById('permViewAuditLogs').checked = staff.permissions.viewAuditLogs || false;
             document.getElementById('permSystemSettings').checked = staff.permissions.systemSettings || false;
         }
-        
+
         document.getElementById('staffModal').classList.remove('hidden');
         lucide.createIcons();
     }
@@ -882,7 +975,7 @@
     function togglePasswordVisibility() {
         const passwordInput = document.getElementById('staffPassword');
         const toggleIcon = document.getElementById('passwordToggleIcon');
-        
+
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             toggleIcon.setAttribute('data-lucide', 'eye-off');
@@ -895,7 +988,7 @@
 
     document.getElementById('staffForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const staffData = {
             fullName: document.getElementById('staffFullName').value,
             email: document.getElementById('staffEmail').value,
@@ -913,17 +1006,17 @@
                 systemSettings: document.getElementById('permSystemSettings').checked
             }
         };
-        
+
         // Add password only for new staff members
         if (!currentEditStaffId) {
             const password = document.getElementById('staffPassword').value;
             if (!password || password.length < 8) {
-                alert('Password must be at least 8 characters long');
+                showModal('Invalid Password', 'Password must be at least 8 characters long.', 'error');
                 return;
             }
             staffData.password = password;
         }
-        
+
         try {
             let response;
             if (currentEditStaffId) {
@@ -941,59 +1034,61 @@
                     body: JSON.stringify(staffData)
                 });
             }
-            
+
             if (response.ok) {
                 closeStaffModal();
+                await showModal('Success', 'Staff member saved successfully', 'success');
                 location.reload(); // Reload to show updated staff list
             } else {
                 const errorData = await response.json();
-                alert(errorData.message || 'Error saving staff member');
+                showModal('Error', errorData.message || 'Error saving staff member', 'error');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error saving staff member');
+            showModal('Error', 'Error saving staff member', 'error');
         }
     });
 
     async function deleteStaff(staffId) {
-        if (confirm('Are you sure you want to deactivate this staff member?')) {
-            try {
-                console.log('Deleting staff with ID:', staffId);
-                const response = await fetch(`/api/admin/staff/${staffId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                console.log('Delete response:', data);
-                
-                if (response.ok && data.success) {
-                    alert('Staff member deactivated successfully');
-                    location.reload();
-                } else {
-                    alert(data.error || 'Error deactivating staff member');
+        const confirmed = await showModal('Confirm Deactivation', 'Are you sure you want to deactivate this staff member?', 'confirm');
+        if (!confirmed) return;
+
+        try {
+            console.log('Deleting staff with ID:', staffId);
+            const response = await fetch(`/api/admin/staff/${staffId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error deactivating staff member: ' + error.message);
+            });
+
+            const data = await response.json();
+            console.log('Delete response:', data);
+
+            if (response.ok && data.success) {
+                await showModal('Success', 'Staff member deactivated successfully', 'success');
+                location.reload();
+            } else {
+                showModal('Error', data.error || 'Error deactivating staff member', 'error');
             }
+        } catch (error) {
+            console.error('Error:', error);
+            showModal('Error', 'Error deactivating staff member: ' + error.message, 'error');
         }
     }
 
     // Audit Log Functions
     async function loadAuditLogs() {
         const actionType = document.getElementById('filterActionType')?.value || '';
-        
+
         try {
             const params = new URLSearchParams();
             if (actionType) params.append('action_type', actionType);
             params.append('limit', '50');
-            
+
             const response = await fetch(`/api/admin/audit-logs?${params}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 displayAuditLogs(data.logs);
             }
@@ -1004,12 +1099,12 @@
 
     function displayAuditLogs(logs) {
         const container = document.getElementById('auditLogsList');
-        
+
         if (logs.length === 0) {
             container.innerHTML = '<p class="text-gray-500 text-center py-8">No audit logs found</p>';
             return;
         }
-        
+
         container.innerHTML = logs.map(log => `
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div class="flex items-start justify-between">
@@ -1040,7 +1135,7 @@
                 </div>
             </div>
         `).join('');
-        
+
         lucide.createIcons();
     }
 
@@ -1080,7 +1175,7 @@
         try {
             const response = await fetch('/api/professionals/list');
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 professionalsList = data.professionals;
                 displayProfessionals(professionalsList);
@@ -1094,7 +1189,7 @@
     // Updated display function to show profession type
     function displayProfessionals(professionals) {
         const tbody = document.getElementById('professionalsTableBody');
-        
+
         if (professionals.length === 0) {
             tbody.innerHTML = `
                 <tr>
@@ -1120,9 +1215,9 @@
         tbody.innerHTML = professionals.map(prof => `
             <tr class="hover:bg-[#faeee7]/50 transition-colors">
                 <td class="px-6 py-4">
-                    <span class="px-3 py-1 bg-[#33272a] text-white text-xs rounded-full font-mono font-bold">
-                        ${prof.professional_id}
-                    </span>
+                    <div class="text-sm">
+                        <p class="font-semibold text-[#33272a]">${prof.professional_id}</p>
+                    </div>
                 </td>
                 <td class="px-6 py-4">
                     <div>
@@ -1151,8 +1246,8 @@
                 </td>
                 <td class="px-6 py-4">
                     <span class="px-3 py-1 rounded-full text-xs font-semibold ${
-                        prof.status === 'active' 
-                            ? 'bg-[#c3f0ca] text-[#33272a]' 
+                        prof.status === 'active'
+                            ? 'bg-[#c3f0ca] text-[#33272a]'
                             : prof.status === 'on-leave'
                             ? 'bg-[#ffc6c7] text-[#33272a]'
                             : 'bg-gray-200 text-gray-700'
@@ -1162,13 +1257,13 @@
                 </td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
-                        <button onclick='editProfessional(${JSON.stringify(prof).replace(/'/g, "&apos;")})' 
-                                class="p-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors" 
+                        <button onclick='editProfessional(${JSON.stringify(prof).replace(/'/g, "&apos;")})'
+                                class="p-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors"
                                 title="Edit">
                             <i data-lucide="edit" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="deleteProfessional('${prof.professional_id}', '${prof.full_name}')" 
-                                class="p-2 bg-[#ffc6c7] text-[#33272a] rounded-lg hover:opacity-80 transition-all" 
+                        <button onclick="deleteProfessional('${prof.professional_id}', '${prof.full_name}')"
+                                class="p-2 bg-[#ffc6c7] text-[#33272a] rounded-lg hover:opacity-80 transition-all"
                                 title="Delete">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
@@ -1186,14 +1281,24 @@
         const specializationFilter = document.getElementById('specializationFilter').value;
         const statusFilter = document.getElementById('statusFilter').value;
 
+        // Map profession types to display names (same as in displayProfessionals)
+        const professionNames = {
+            'medical-doctor': 'Medical Doctor',
+            'dentist': 'Dentist',
+            'immunization-doctor': 'Immunization Doctor',
+            'mental-health-doctor': 'Mental Health Doctor',
+            'medical-technologist': 'Medical Technologist'
+        };
+
         let filtered = professionalsList.filter(prof => {
-            const matchesSearch = !searchTerm || 
+            const matchesSearch = !searchTerm ||
                 prof.full_name.toLowerCase().includes(searchTerm) ||
                 prof.email.toLowerCase().includes(searchTerm) ||
                 prof.specialization.toLowerCase().includes(searchTerm) ||
                 prof.profession_type.toLowerCase().includes(searchTerm);
-            
-            const matchesSpecialization = !specializationFilter || prof.specialization === specializationFilter;
+
+            // Fix: Check against the profession type display name
+            const matchesSpecialization = !specializationFilter || professionNames[prof.profession_type] === specializationFilter;
             const matchesStatus = !statusFilter || prof.status === statusFilter;
 
             return matchesSearch && matchesSpecialization && matchesStatus;
@@ -1205,7 +1310,7 @@
     function updateProfessionalStats() {
         const totalProfs = professionalsList.length;
         const activeProfs = professionalsList.filter(p => p.status === 'active').length;
-        
+
         document.getElementById('total-professionals').textContent = totalProfs;
         document.getElementById('active-professionals').textContent = activeProfs;
     }
@@ -1251,23 +1356,23 @@
         const professionType = document.getElementById('profProfessionType').value;
         const specializationSelect = document.getElementById('profSpecialization');
         const helpText = document.getElementById('professionTypeHelp');
-        
+
         if (!professionType) {
             specializationSelect.innerHTML = '<option value="">First select profession type</option>';
             helpText.textContent = 'Select the professional\'s medical specialty area';
             return;
         }
-        
+
         // Update help text
         helpText.textContent = professionTypeHelpText[professionType] || '';
-        
+
         // Get specialization options for this profession type
         const options = specializationOptions[professionType] || [];
-        
+
         // Populate specialization dropdown
         specializationSelect.innerHTML = '<option value="">Select Specialization</option>' +
             options.map(spec => `<option value="${spec}">${spec}</option>`).join('');
-        
+
         lucide.createIcons();
     }
 
@@ -1278,11 +1383,11 @@
         document.getElementById('professionalForm').reset();
         document.getElementById('professionalId').value = '';
         document.getElementById('professionalPasswordGroup').classList.remove('hidden');
-        
+
         // Reset specialization dropdown
         document.getElementById('profSpecialization').innerHTML = '<option value="">First select profession type</option>';
         document.getElementById('professionTypeHelp').textContent = 'Select the professional\'s medical specialty area';
-        
+
         document.getElementById('professionalModal').classList.remove('hidden');
         lucide.createIcons();
     }
@@ -1291,7 +1396,7 @@
     function editProfessional(professional) {
         currentEditProfessionalId = professional.professional_id;
         document.getElementById('professionalModalTitle').textContent = 'Edit Professional';
-        
+
         document.getElementById('professionalId').value = professional.professional_id;
         document.getElementById('profFullName').value = professional.full_name;
         document.getElementById('profEmail').value = professional.email;
@@ -1299,19 +1404,19 @@
         document.getElementById('profOfficialId').value = professional.professional_id || '';
         document.getElementById('profLicense').value = professional.license_number;
         document.getElementById('profProfessionType').value = professional.profession_type;
-        
+
         // Update specialization options before setting value
         updateSpecializationOptions();
-        
+
         document.getElementById('profSpecialization').value = professional.specialization;
         document.getElementById('profQualifications').value = professional.qualifications || '';
         document.getElementById('profExperience').value = professional.years_of_experience;
         document.getElementById('profMaxAppointments').value = professional.max_appointments_per_day;
         document.getElementById('profStatus').value = professional.status;
-        
+
         document.getElementById('professionalPasswordGroup').classList.add('hidden');
         document.getElementById('professionalModal').classList.remove('hidden');
-        
+
         lucide.createIcons();
     }
 
@@ -1322,9 +1427,8 @@
     }
 
     async function deleteProfessional(professionalId, fullName) {
-        if (!confirm(`Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`)) {
-            return;
-        }
+        const confirmed = await showModal('Confirm Deletion', `Are you sure you want to permanently delete ${fullName}? This action cannot be undone.`, 'confirm');
+        if (!confirmed) return;
 
         try {
             const response = await fetch(`/api/admin/professionals/${professionalId}`, {
@@ -1333,16 +1437,16 @@
             });
 
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 loadProfessionals();
-                showToast('Professional deleted successfully', 'success');
+                showModal('Success', 'Professional deleted successfully', 'success');
             } else {
-                showToast(data.message || 'Failed to delete professional', 'error');
+                showModal('Error', data.message || 'Failed to delete professional', 'error');
             }
         } catch (error) {
             console.error('Error deleting professional:', error);
-            showToast('Error deleting professional', 'error');
+            showModal('Error', 'Error deleting professional', 'error');
         }
     }
 
@@ -1354,7 +1458,7 @@
                 e.preventDefault();
 
                 const professionalId = document.getElementById('professionalId').value;
-                
+
                 // Validate required fields
                 const fullName = document.getElementById('profFullName').value.trim();
                 const email = document.getElementById('profEmail').value.trim();
@@ -1363,12 +1467,12 @@
                 const professionType = document.getElementById('profProfessionType').value;
                 const specialization = document.getElementById('profSpecialization').value;
                 const experience = document.getElementById('profExperience').value;
-                
+
                 if (!fullName || !email || !phone || !license || !professionType || !specialization || !experience) {
                     showToast('Please fill in all required fields', 'error');
                     return;
                 }
-                
+
                 const formData = {
                     full_name: fullName,
                     email: email,
@@ -1395,10 +1499,10 @@
                 console.log('Submitting professional data:', formData);
 
                 try {
-                    const url = professionalId 
+                    const url = professionalId
                         ? `/api/admin/professionals/${professionalId}`
                         : '/api/admin/professionals';
-                    
+
                     const method = professionalId ? 'PUT' : 'POST';
 
                     const response = await fetch(url, {
@@ -1430,13 +1534,13 @@
         // Simple toast notification
         const toast = document.createElement('div');
         toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 ${
-            type === 'success' ? 'bg-[#c3f0ca] text-[#33272a]' : 
-            type === 'error' ? 'bg-[#ffc6c7] text-[#33272a]' : 
+            type === 'success' ? 'bg-[#c3f0ca] text-[#33272a]' :
+            type === 'error' ? 'bg-[#ffc6c7] text-[#33272a]' :
             'bg-[#33272a]'
         }`;
         toast.textContent = message;
         document.body.appendChild(toast);
-        
+
         setTimeout(() => {
             toast.remove();
         }, 3000);

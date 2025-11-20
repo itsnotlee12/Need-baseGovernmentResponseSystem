@@ -259,7 +259,7 @@
     </div>
 </div>
 
-<!-- Schedule Appointment Modal - UPDATED FOR ALL HEALTH SERVICES -->
+<!-- Schedule Appointment Modal -->
 <div id="scheduleModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="bg-gradient-to-r from-[#33272a] to-[#594a4e] text-white p-6 rounded-t-2xl">
@@ -363,37 +363,154 @@
     </div>
 </div>
 
+<!-- Schedule Sanitary Inspection Modal -->
+<div id="scheduleSanitaryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-gradient-to-r from-[#594a4e] to-[#33272a] text-white p-6 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white/20 rounded-lg">
+                        <i data-lucide="clipboard-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">Schedule Sanitary Inspection</h2>
+                        <p class="text-white/80 text-sm mt-1">Set inspection date and notify citizen</p>
+                    </div>
+                </div>
+                <button onclick="closeSanitaryModal()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <form onsubmit="scheduleSanitaryInspection(event)" class="p-6">
+            <input type="hidden" id="sanitaryRequestId">
+
+            <!-- Requester Info -->
+            <div class="mb-6 p-4 bg-[#faeee7] rounded-lg border border-[#33272a]/10">
+                <h3 class="font-bold text-[#33272a] mb-2">Inspection Request Information</h3>
+                <p class="text-sm text-[#594a4e]">
+                    <span class="font-semibold">Requester:</span> <span id="sanitaryCitizenName"></span>
+                </p>
+                <p class="text-sm text-[#594a4e] mt-1">
+                    <span class="font-semibold">Email:</span> <span id="sanitaryCitizenEmail"></span>
+                </p>
+                <p class="text-sm text-[#594a4e] mt-1">
+                    <span class="font-semibold">Location:</span> <span id="sanitaryLocation"></span>
+                </p>
+            </div>
+
+            <!-- Date and Time -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-[#33272a] font-bold mb-2">
+                        <i data-lucide="calendar" class="w-4 h-4 inline mr-1"></i>
+                        Inspection Date *
+                    </label>
+                    <input type="date" id="inspectionDate" required
+                        class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-[#33272a] font-bold mb-2">
+                        <i data-lucide="clock" class="w-4 h-4 inline mr-1"></i>
+                        Inspection Time *
+                    </label>
+                    <input type="time" id="inspectionTime" required
+                        class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
+                </div>
+            </div>
+
+            <!-- Inspection Type -->
+            <div class="mb-6">
+                <label class="block text-[#33272a] font-bold mb-2">
+                    <i data-lucide="clipboard-list" class="w-4 h-4 inline mr-1"></i>
+                    Inspection Type *
+                </label>
+                <select id="inspectionType" required
+                    class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent">
+                    <option value="on-site-inspection">🏢 On-Site Inspection</option>
+                    <option value="follow-up">🔄 Follow-up Inspection</option>
+                    <option value="emergency">🚨 Emergency Inspection</option>
+                    <option value="routine">📋 Routine Check</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-6">
+                <label class="block text-[#33272a] font-bold mb-2">
+                    <i data-lucide="file-text" class="w-4 h-4 inline mr-1"></i>
+                    Additional Information
+                </label>
+                <textarea id="inspectionNotes" rows="3"
+                    class="w-full px-4 py-3 border-2 border-[#33272a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#33272a] focus:border-transparent resize-none"
+                    placeholder="Any special instructions or areas of concern..."></textarea>
+            </div>
+
+            <!-- Info Message -->
+            <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                    The citizen will be notified with the scheduled date and time. Inspector will be assigned internally.
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button type="submit"
+                    class="flex-1 px-6 py-3 bg-[#594a4e] text-white rounded-lg hover:bg-[#33272a] transition-colors font-bold shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                    Schedule & Notify Citizen
+                </button>
+                <button type="button" onclick="closeSanitaryModal()"
+                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL FOR ALERTS -->
+<!-- ============================================ -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div id="modalContent"></div>
+    </div>
+</div>
+
 <script>
     let allRequests = [];
     let currentView = 'queue';
-    
+    let professionals = [];
+
     function logout() {
         fetch('/api/logout', { method: 'POST' }).then(() => {
             window.location.href = '/';
         });
     }
-    
+
     function switchView(view) {
         currentView = view;
-        
+
         document.getElementById('queueView').style.display = view === 'queue' ? 'block' : 'none';
         document.getElementById('analyticsView').style.display = view === 'analytics' ? 'block' : 'none';
-        
-        document.getElementById('queueTab').className = view === 'queue' 
+
+        document.getElementById('queueTab').className = view === 'queue'
             ? 'flex items-center gap-2 px-8 py-4 border-b-3 border-[#33272a] text-[#33272a] transition-colors font-semibold bg-[#faeee7]'
             : 'flex items-center gap-2 px-8 py-4 border-b-3 border-transparent text-[#594a4e] hover:text-[#33272a] hover:bg-[#faeee7] transition-colors font-medium';
-        
+
         document.getElementById('analyticsTab').className = view === 'analytics'
             ? 'flex items-center gap-2 px-8 py-4 border-b-3 border-[#33272a] text-[#33272a] transition-colors font-semibold bg-[#faeee7]'
             : 'flex items-center gap-2 px-8 py-4 border-b-3 border-transparent text-[#594a4e] hover:text-[#33272a] hover:bg-[#faeee7] transition-colors font-medium';
-        
+
         lucide.createIcons();
-        
+
         if (view === 'analytics') {
             renderAnalytics();
         }
     }
-    
+
     function getStatusBadge(status) {
         const badges = {
             'pending': '<span class="px-3 py-1.5 bg-[#ffc6c7] text-[#33272a] rounded-lg text-sm font-semibold border border-[#ffc6c7]">⏳ Pending</span>',
@@ -402,7 +519,7 @@
         };
         return badges[status] || status;
     }
-    
+
     function getSeverityBadge(severity) {
         const badges = {
             'critical': '<span class="px-3 py-1.5 bg-[#ff8ba7] text-white rounded-lg text-sm font-bold">🔴 CRITICAL</span>',
@@ -412,7 +529,7 @@
         };
         return badges[severity] || severity;
     }
-    
+
     function getNeedTypeLabel(needType) {
         const labels = {
             'Medical': 'Medical',
@@ -424,33 +541,44 @@
         };
         return labels[needType] || needType;
     }
-    
+
     async function markComplete(requestId) {
-        if (!confirm('This will notify the citizen to wait for professional confirmation. Continue?')) return;
-        
+        const confirmed = await showModal(
+            'Confirm Completion',
+            'This will notify the citizen to wait for professional confirmation. Continue?',
+            'confirm'
+        );
+
+        if (!confirmed) return;
+
         try {
             const response = await fetch(`/api/requests/${requestId}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'completed' })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
-                alert('Request marked complete. Citizen has been notified to wait for professional confirmation.');
+                await showModal('Success ✓', 'Request marked complete. Citizen has been notified to wait for professional confirmation.', 'alert');
                 loadRequests();
             } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
+                await showModal('Error', 'Error: ' + (data.error || 'Unknown error'), 'alert');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error updating status');
+            await showModal('Error', 'Error updating status', 'alert');
         }
     }
-    
+
     async function updateStatus(requestId, newStatus) {
         try {
+            if (newStatus === 'completed') {
+                const confirmed = await showModal('Confirm Completion', 'Mark this request as completed? The citizen will be notified.', 'confirm');
+                if (!confirmed) return;
+            }
+
             const response = await fetch(`/api/requests/${requestId}/status`, {
                 method: 'PUT',
                 headers: {
@@ -458,25 +586,32 @@
                 },
                 body: JSON.stringify({ status: newStatus })
             });
-            
-            if (response.ok) {
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                await showModal('Success ✓', `Request status updated to: ${newStatus}`, 'alert');
                 loadRequests();
+            } else {
+                await showModal('Error', 'Error updating status: ' + (data.error || 'Unknown error'), 'alert');
+                console.error('Update status error:', data);
             }
         } catch (error) {
             console.error('Error updating status:', error);
+            await showModal('Error', 'An error occurred while updating the status', 'alert');
         }
     }
-    
+
     function renderRequest(request) {
         const date = new Date(request.submittedAt).toLocaleString();
         const vulnerabilities = request.vulnerabilityGroup
             .filter(v => v !== 'none')
             .map(v => `<span class="px-2.5 py-1 bg-[#ff8ba7]/10 text-[#33272a] rounded-md text-xs font-semibold border border-[#ff8ba7]/30">${v}</span>`)
             .join(' ');
-        
-        // Check if this need type requires appointment
+
         const needsAppointment = ['medical', 'dental-services', 'immunization', 'laboratory', 'mental-health'].includes(request.needType);
-        
+        const needsSanitaryInspection = request.needType === 'sanitary-inspection';
+
         return `
             <div class="bg-white border-l-4 ${request.severity === 'critical' ? 'border-[#ff8ba7]' : 'border-[#33272a]'} rounded-xl p-6 hover:shadow-xl transition-all shadow-sm ${request.severity === 'critical' ? 'ring-2 ring-[#ff8ba7]/20' : ''}">
                 <div class="flex justify-between items-start mb-5">
@@ -499,7 +634,7 @@
                         <div class="text-xs font-semibold opacity-90">PRIORITY</div>
                     </div>
                 </div>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5 p-4 bg-[#faeee7] rounded-lg">
                     <div class="text-sm"><span class="font-bold text-[#33272a]">Citizen:</span> <span class="text-[#594a4e]">${request.citizenName}</span></div>
                     <div class="text-sm"><span class="font-bold text-[#33272a]">Phone:</span> <span class="text-[#594a4e]">${request.phone}</span></div>
@@ -507,26 +642,26 @@
                     <div class="text-sm"><span class="font-bold text-[#33272a]">People Affected:</span> <span class="text-[#594a4e] font-semibold">${request.peopleAffected}</span></div>
                     ${request.estimatedResponseTime ? `<div class="text-sm"><span class="font-bold text-[#33272a]">Est. Response:</span> <span class="text-[#594a4e]">${request.estimatedResponseTime}</span></div>` : ''}
                 </div>
-                
+
                 <div class="mb-4 p-4 bg-white border border-[#33272a]/10 rounded-lg">
                     <p class="text-[#33272a] font-bold mb-2">Description:</p>
                     <p class="text-[#594a4e] leading-relaxed">${request.description}</p>
                 </div>
-                
+
                 ${request.specialCircumstances ? `
                     <div class="mb-4 p-4 bg-[#ffc6c7]/20 border-l-4 border-[#ff8ba7] rounded-lg">
                         <p class="text-[#33272a] font-bold mb-2">⚠️ Special Circumstances:</p>
                         <p class="text-[#594a4e]">${request.specialCircumstances}</p>
                     </div>
                 ` : ''}
-                
+
                 ${request.educationalNeeds ? `
                     <div class="mb-4 p-4 bg-[#33272a] text-white rounded-lg">
                         <p class="font-bold mb-2">📚 Educational Need: ${request.educationalNeeds.type}</p>
                         ${request.educationalNeeds.details ? `<p class="opacity-90">${request.educationalNeeds.details}</p>` : ''}
                     </div>
                 ` : ''}
-                
+
                 ${request.needType === 'sanitary-inspection' && request.photoEvidence && request.photoEvidence.length > 0 ? `
                     <div class="mb-4 p-4 bg-white border-2 border-[#33272a]/20 rounded-lg">
                         <p class="text-[#33272a] font-bold mb-3 flex items-center gap-2">
@@ -539,8 +674,8 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             ${request.photoEvidence.map((photo, index) => `
                                 <div class="relative group">
-                                    <img src="/${photo}" 
-                                         alt="Evidence ${index + 1}" 
+                                    <img src="/${photo}"
+                                         alt="Evidence ${index + 1}"
                                          class="w-full h-48 object-cover rounded-lg border-2 border-[#33272a]/10 hover:border-[#33272a]/30 transition-all cursor-pointer shadow-sm hover:shadow-md"
                                          onclick="window.open('/${photo}', '_blank')"
                                          onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22100%22 height=%22100%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EImage not found%3C/text%3E%3C/svg%3E'">
@@ -552,7 +687,7 @@
                         </div>
                     </div>
                 ` : ''}
-                
+
                 <div class="flex gap-3 pt-5 border-t-2 border-[#33272a]/10">
                     ${request.status === 'pending' ? `
                         <button onclick="updateStatus('${request.id}', 'in-progress')"
@@ -560,25 +695,58 @@
                             ▶ Start Processing
                         </button>
                     ` : ''}
+
                     ${request.status === 'in-progress' ? `
-                        ${needsAppointment ? `
+                        ${needsSanitaryInspection ? `
+                            ${request.severity === 'critical' ? `
+                                <button onclick="updateStatus('${request.id}', 'completed')"
+                                    class="px-6 py-3 bg-[#ff8ba7] text-white rounded-lg hover:bg-[#ff8ba7]/80 transition-colors font-bold shadow-md flex items-center gap-2">
+                                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                                    Mark as Responded (Critical)
+                                </button>
+                                <div class="px-4 py-3 bg-red-50 border-l-4 border-[#ff8ba7] rounded-lg text-sm text-red-800 font-semibold flex-1">
+                                    Critical severity - Immediate response required. No scheduling needed.
+                                </div>
+                            ` : `
+                                ${!request.referralStatus || request.referralStatus === 'none' ? `
+                                    <button onclick="openSanitaryModal('${request.id}', '${request.citizenName}', '${request.email}', '${request.location.address}')"
+                                        class="px-6 py-3 bg-[#594a4e] text-white rounded-lg hover:bg-[#33272a] transition-colors font-bold shadow-md flex items-center gap-2">
+                                        <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+                                        Schedule Inspection
+                                    </button>
+                                ` : request.referralStatus === 'scheduling' ? `
+                                    <div class="px-6 py-3 bg-green-100 text-green-700 rounded-lg font-bold border-2 border-green-300 flex items-center gap-2">
+                                        <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                                        Inspection Scheduled - Citizen Notified
+                                    </div>
+                                    <button onclick="updateStatus('${request.id}', 'completed')"
+                                        class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-bold shadow-md">
+                                        Mark as Completed
+                                    </button>
+                                ` : ''}
+                            `}
+                        ` : needsAppointment ? `
                             ${!request.referralStatus || request.referralStatus === 'none' ? `
                                 <button onclick="openScheduleModal('${request.id}', '${request.citizenName}', '${request.email}', '${request.needType}')"
-                                    class="px-6 py-3 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-bold shadow-md">
-                                    📅 Schedule Appointment
+                                    class="px-6 py-3 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-bold shadow-md flex items-center gap-2">
+                                    <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                                    Schedule Appointment
                                 </button>
                             ` : request.referralStatus === 'scheduling' ? `
                                 <button onclick="markComplete('${request.id}')"
-                                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-md">
-                                    ✓ Mark Complete (Notify Citizen)
+                                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold shadow-md flex items-center gap-2">
+                                    <i data-lucide="check" class="w-5 h-5"></i>
+                                    Mark Complete (Notify Citizen)
                                 </button>
                             ` : request.referralStatus === 'waiting_confirmation' ? `
-                                <div class="px-6 py-3 bg-orange-100 text-orange-700 rounded-lg font-bold border-2 border-orange-300">
-                                    ⏳ Waiting for Professional Confirmation
+                                <div class="px-6 py-3 bg-orange-100 text-orange-700 rounded-lg font-bold border-2 border-orange-300 flex items-center gap-2">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                    Waiting for Professional Confirmation
                                 </div>
                             ` : request.referralStatus === 'confirmed' ? `
-                                <div class="px-6 py-3 bg-green-100 text-green-700 rounded-lg font-bold border-2 border-green-300">
-                                    ✅ Confirmed by Professional
+                                <div class="px-6 py-3 bg-green-100 text-green-700 rounded-lg font-bold border-2 border-green-300 flex items-center gap-2">
+                                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                                    Confirmed by Professional
                                 </div>
                                 <button onclick="updateStatus('${request.id}', 'completed')"
                                     class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-bold shadow-md">
@@ -587,11 +755,13 @@
                             ` : ''}
                         ` : `
                             <button onclick="updateStatus('${request.id}', 'completed')"
-                                class="px-6 py-3 bg-[#c3f0ca] text-[#33272a] rounded-lg hover:bg-[#c3f0ca]/80 transition-colors font-bold shadow-md border-2 border-[#c3f0ca]">
-                                ✓ Mark Completed
+                                class="px-6 py-3 bg-[#c3f0ca] text-[#33272a] rounded-lg hover:bg-[#c3f0ca]/80 transition-colors font-bold shadow-md border-2 border-[#c3f0ca] flex items-center gap-2">
+                                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                                Mark Completed
                             </button>
                         `}
                     ` : ''}
+
                     <div class="flex-1 text-right text-sm text-[#594a4e]">
                         <div class="font-semibold text-[#33272a]">Submitted: ${date}</div>
                         ${request.assignedTo ? `<div class="mt-1">Assigned to: <span class="font-semibold">${request.assignedTo}</span></div>` : ''}
@@ -600,21 +770,21 @@
             </div>
         `;
     }
-    
+
     function applyFilters() {
         const statusFilter = document.getElementById('filterStatus').value;
         const severityFilter = document.getElementById('filterSeverity').value;
         const needTypeFilter = document.getElementById('filterNeedType').value;
-        
+
         const filtered = allRequests.filter(req => {
             if (statusFilter !== 'all' && req.status !== statusFilter) return false;
             if (severityFilter !== 'all' && req.severity !== severityFilter) return false;
             if (needTypeFilter !== 'all' && req.needType !== needTypeFilter) return false;
             return true;
         });
-        
+
         document.getElementById('requestCount').textContent = filtered.length;
-        
+
         if (filtered.length === 0) {
             document.getElementById('requestsList').innerHTML = `
                 <div class="text-center py-16 bg-white rounded-xl border-2 border-dashed border-[#33272a]/20">
@@ -628,10 +798,10 @@
         } else {
             document.getElementById('requestsList').innerHTML = filtered.map(renderRequest).join('');
         }
-        
+
         lucide.createIcons();
     }
-    
+
     async function loadRequests() {
         try {
             const response = await fetch('/api/requests');
@@ -641,14 +811,13 @@
             console.error('Error loading requests:', error);
         }
     }
-    
+
     function renderAnalytics() {
-        // Need Type Chart
         const needTypes = {};
         allRequests.forEach(req => {
             needTypes[req.needType] = (needTypes[req.needType] || 0) + 1;
         });
-        
+
         const needTypeCtx = document.getElementById('needTypeChart').getContext('2d');
         new Chart(needTypeCtx, {
             type: 'bar',
@@ -673,13 +842,12 @@
                 }
             }
         });
-        
-        // Severity Chart
+
         const severities = { critical: 0, urgent: 0, moderate: 0, low: 0 };
         allRequests.forEach(req => {
             severities[req.severity]++;
         });
-        
+
         const severityCtx = document.getElementById('severityChart').getContext('2d');
         new Chart(severityCtx, {
             type: 'doughnut',
@@ -709,30 +877,94 @@
                 }
             }
         });
-        
-        // Performance Metrics
+
         const completed = allRequests.filter(r => r.status === 'completed').length;
         const completionRate = allRequests.length > 0 ? Math.round((completed / allRequests.length) * 100) : 0;
         document.getElementById('completionRate').textContent = completionRate + '%';
-        
-        const avgPriority = allRequests.length > 0 
+
+        const avgPriority = allRequests.length > 0
             ? Math.round(allRequests.reduce((sum, r) => sum + r.priorityScore, 0) / allRequests.length)
             : 0;
         document.getElementById('avgPriority').textContent = avgPriority;
-        
+
         const peopleHelped = allRequests
             .filter(r => r.status === 'completed')
             .reduce((sum, r) => sum + r.peopleAffected, 0);
         document.getElementById('peopleHelped').textContent = peopleHelped;
     }
-    
-    // Load requests on page load
+
+    // ==================== MODAL UTILITY ====================
+    function showModal(title, message, type = 'alert') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+
+            let buttons = '';
+            if (type === 'confirm') {
+                buttons = `
+                    <div class="flex gap-3 mt-6">
+                        <button id="modalCancel" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">Cancel</button>
+                        <button id="modalConfirm" class="flex-1 px-4 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">Confirm</button>
+                    </div>
+                `;
+            } else {
+                buttons = `
+                    <div class="flex justify-end mt-6">
+                        <button id="modalOk" class="px-6 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">OK</button>
+                    </div>
+                `;
+            }
+
+            modalContent.innerHTML = `
+                <h3 class="text-xl font-bold text-[#33272a] mb-4">${title}</h3>
+                <div class="text-gray-700 leading-relaxed">${message}</div>
+                ${buttons}
+            `;
+
+            modal.classList.remove('hidden');
+
+            if (type === 'confirm') {
+                document.getElementById('modalCancel').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(false);
+                };
+                document.getElementById('modalConfirm').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            } else {
+                document.getElementById('modalOk').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve();
+                };
+            }
+
+            // Close on background click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    resolve(type === 'confirm' ? false : undefined);
+                }
+            };
+
+            // Close on Escape
+            document.addEventListener('keydown', function escHandler(e) {
+                if (e.key === 'Escape') {
+                    modal.classList.add('hidden');
+                    document.removeEventListener('keydown', escHandler);
+                    resolve(type === 'confirm' ? false : undefined);
+                }
+            });
+        });
+    }
+
     loadRequests();
-    
-    // Refresh every 30 seconds
     setInterval(loadRequests, 30000);
-    
-    // Configuration for appointment types by need type
+
+    // ============================================
+    // HEALTH SERVICES APPOINTMENT SCHEDULING
+    // ============================================
+
     const appointmentTypesByNeed = {
         'medical': [
             { value: 'consultation', label: 'General Consultation' },
@@ -763,8 +995,7 @@
             { value: 'follow-up', label: 'Follow-up Session' }
         ]
     };
-    
-    // Service display names
+
     const serviceDisplayNames = {
         'medical': 'Medical Services',
         'dental-services': 'Dental Services',
@@ -772,18 +1003,15 @@
         'laboratory': 'Laboratory & Diagnostics',
         'mental-health': 'Mental Health Services'
     };
-    
-    // Schedule Modal Functions
-    let professionals = [];
-    
+
     async function loadProfessionals(needType) {
         try {
             const response = await fetch(`/api/professionals/list?need_type=${needType}`);
             const data = await response.json();
-            
+
             if (data.status === 'success' || data.success) {
                 professionals = data.professionals || [];
-                
+
                 const select = document.getElementById('professionalSelect');
                 if (professionals.length === 0) {
                     select.innerHTML = '<option value="">No professionals available for this service</option>';
@@ -805,47 +1033,42 @@
             document.getElementById('professionalSelect').innerHTML = '<option value="">Error loading professionals</option>';
         }
     }
-    
+
     function openScheduleModal(requestId, citizenName, citizenEmail, needType) {
         document.getElementById('scheduleRequestId').value = requestId;
         document.getElementById('scheduleNeedType').value = needType;
         document.getElementById('scheduleCitizenName').textContent = citizenName;
         document.getElementById('scheduleCitizenEmail').textContent = citizenEmail;
-        
-        // Update subtitle and service type
+
         const serviceName = serviceDisplayNames[needType] || needType;
         document.getElementById('scheduleSubtitle').textContent = `Schedule ${serviceName} appointment`;
         document.getElementById('scheduleServiceType').textContent = serviceName;
-        
-        // Populate appointment types based on need type
+
         const appointmentTypeSelect = document.getElementById('appointmentType');
         const types = appointmentTypesByNeed[needType] || [{ value: 'consultation', label: 'Consultation' }];
-        appointmentTypeSelect.innerHTML = types.map(type => 
+        appointmentTypeSelect.innerHTML = types.map(type =>
             `<option value="${type.value}">${type.label}</option>`
         ).join('');
-        
-        // Set minimum date to today
+
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('appointmentDate').min = today;
-        
+
         document.getElementById('scheduleModal').classList.remove('hidden');
         document.getElementById('scheduleModal').classList.add('flex');
-        
+
         lucide.createIcons();
-        
-        // Load professionals for this need type
         loadProfessionals(needType);
     }
-    
+
     function closeScheduleModal() {
         document.getElementById('scheduleModal').classList.add('hidden');
         document.getElementById('scheduleModal').classList.remove('flex');
         document.getElementById('professionalSelect').innerHTML = '<option value="">Loading professionals...</option>';
     }
-    
+
     async function scheduleAppointment(event) {
         event.preventDefault();
-        
+
         const requestId = document.getElementById('scheduleRequestId').value;
         const needType = document.getElementById('scheduleNeedType').value;
         const professionalId = document.getElementById('professionalSelect').value;
@@ -853,14 +1076,14 @@
         const appointmentTime = document.getElementById('appointmentTime').value;
         const appointmentType = document.getElementById('appointmentType').value;
         const notes = document.getElementById('appointmentNotes').value;
-        
+
         if (!professionalId) {
-            alert('Please select a health professional');
+            await showModal('Validation Error', 'Please select a health professional', 'alert');
             return;
         }
-        
+
         const serviceName = serviceDisplayNames[needType] || needType;
-        
+
         try {
             const response = await fetch('/api/staff/schedule_appointment', {
                 method: 'POST',
@@ -876,19 +1099,97 @@
                     notes: notes
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
-                alert(`${serviceName} appointment scheduled successfully! The professional has been notified. Click "Mark Complete" to notify the citizen.`);
+                await showModal('Success ✓', `${serviceName} appointment scheduled successfully! The professional has been notified. Click "Mark Complete" to notify the citizen.`, 'alert');
                 closeScheduleModal();
                 loadRequests();
             } else {
-                alert('Error: ' + data.error);
+                await showModal('Error', 'Error: ' + data.error, 'alert');
             }
         } catch (error) {
             console.error('Error scheduling appointment:', error);
-            alert('An error occurred. Please try again.');
+            await showModal('Error', 'An error occurred. Please try again.', 'alert');
+        }
+    }
+
+    // ============================================
+    // SANITARY INSPECTION SCHEDULING
+    // ============================================
+
+    function openSanitaryModal(requestId, citizenName, citizenEmail, location) {
+        console.log('openSanitaryModal called');
+        document.getElementById('sanitaryRequestId').value = requestId;
+        document.getElementById('sanitaryCitizenName').textContent = citizenName;
+        document.getElementById('sanitaryCitizenEmail').textContent = citizenEmail;
+        document.getElementById('sanitaryLocation').textContent = location;
+
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('inspectionDate').min = today;
+
+        document.getElementById('scheduleSanitaryModal').classList.remove('hidden');
+        document.getElementById('scheduleSanitaryModal').classList.add('flex');
+
+        lucide.createIcons();
+    }
+
+    function closeSanitaryModal() {
+        document.getElementById('scheduleSanitaryModal').classList.add('hidden');
+        document.getElementById('scheduleSanitaryModal').classList.remove('flex');
+    }
+
+    async function scheduleSanitaryInspection(event) {
+        event.preventDefault();
+
+        console.log('scheduleSanitaryInspection called');
+
+        const requestId = document.getElementById('sanitaryRequestId').value;
+        const inspectionDate = document.getElementById('inspectionDate').value;
+        const inspectionTime = document.getElementById('inspectionTime').value;
+        const inspectionType = document.getElementById('inspectionType').value;
+        const notes = document.getElementById('inspectionNotes').value;
+
+        console.log('Form data:', { requestId, inspectionDate, inspectionTime, inspectionType, notes });
+
+        if (!inspectionDate || !inspectionTime) {
+            await showModal('Validation Error', 'Please fill in both date and time', 'alert');
+            return;
+        }
+
+        try {
+            console.log('Sending request to backend...');
+
+            const response = await fetch('/api/staff/schedule_sanitary_inspection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    request_id: requestId,
+                    inspection_date: inspectionDate,
+                    inspection_time: inspectionTime,
+                    inspection_type: inspectionType,
+                    notes: notes
+                })
+            });
+
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (data.success) {
+                await showModal('Success ✓', 'Sanitary inspection scheduled successfully! The citizen has been notified.', 'alert');
+                closeSanitaryModal();
+                loadRequests();
+            } else {
+                await showModal('Error', 'Error: ' + (data.error || 'Unknown error'), 'alert');
+                console.error('Server error:', data);
+            }
+        } catch (error) {
+            console.error('Error scheduling sanitary inspection:', error);
+            await showModal('Error', 'An error occurred. Please try again. Check console for details.', 'alert');
         }
     }
 </script>

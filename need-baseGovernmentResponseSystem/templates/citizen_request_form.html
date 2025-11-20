@@ -197,9 +197,18 @@
     </div>
 </div>
 
+<!-- ============================================ -->
+<!-- MODAL FOR ALERTS -->
+<!-- ============================================ -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <div id="modalContent"></div>
+    </div>
+</div>
+
 <script>
     let selectedVulnerabilities = [];
-    
+
     // Specification options based on need type
     const specificationOptions = {
         'medical': [
@@ -223,16 +232,16 @@
         'mental-health': [],  // No specifications needed for mental health
         'sanitary-inspection': []  // No specifications needed for sanitary inspection
     };
-    
+
     function updateSpecificationOptions() {
         const needType = document.getElementById('needType').value;
         const specContainer = document.getElementById('specificationContainer');
         const specSelect = document.getElementById('specification');
         const photoSection = document.getElementById('photoEvidenceSection');
-        
+
         // Clear existing options
         specSelect.innerHTML = '<option value="">Select Specification</option>';
-        
+
         // Show/hide photo upload for sanitary inspection
         if (needType === 'sanitary-inspection') {
             photoSection.style.display = 'block';
@@ -241,12 +250,12 @@
             document.getElementById('photoEvidence').value = '';
             document.getElementById('photoPreview').innerHTML = '';
         }
-        
+
         // Show/hide specification dropdown based on need type
         if (specificationOptions[needType] && specificationOptions[needType].length > 0) {
             specContainer.style.display = 'block';
             specSelect.required = true;
-            
+
             // Add options for selected need type
             specificationOptions[needType].forEach(option => {
                 const opt = document.createElement('option');
@@ -260,13 +269,13 @@
             specSelect.value = '';  // Clear value
         }
     }
-    
+
     function logout() {
         fetch('/api/logout', { method: 'POST' }).then(() => {
             window.location.href = '/';
         });
     }
-    
+
     function toggleVulnerability(group, btn) {
         const index = selectedVulnerabilities.indexOf(group);
         if (index > -1) {
@@ -279,31 +288,31 @@
             btn.classList.add('border-[#ff8ba7]', 'bg-[#ffc6c7]');
         }
     }
-    
+
     // Photo preview handler
     document.getElementById('photoEvidence').addEventListener('change', function(e) {
         const files = e.target.files;
         const preview = document.getElementById('photoPreview');
         preview.innerHTML = '';
-        
+
         // Limit to 3 files
         const maxFiles = Math.min(files.length, 3);
-        
+
         for (let i = 0; i < maxFiles; i++) {
             const file = files[i];
-            
+
             // Check file size (5MB max)
             if (file.size > 5 * 1024 * 1024) {
-                alert(`File "${file.name}" is too large. Maximum size is 5MB.`);
+                showModal('File Too Large', `File "${file.name}" is too large. Maximum size is 5MB.`, 'alert');
                 continue;
             }
-            
+
             // Check file type
             if (!file.type.startsWith('image/')) {
-                alert(`File "${file.name}" is not an image.`);
+                showModal('Invalid File Type', `File "${file.name}" is not an image.`, 'alert');
                 continue;
             }
-            
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 const div = document.createElement('div');
@@ -316,26 +325,26 @@
             };
             reader.readAsDataURL(file);
         }
-        
+
         if (files.length > 3) {
-            alert('Only the first 3 photos will be uploaded.');
+            showModal('Too Many Files', 'Only the first 3 photos will be uploaded.', 'alert');
         }
     });
-    
+
     document.getElementById('requestForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         // Get specification value - will be empty string if not shown
         const specificationValue = document.getElementById('specification').value || null;
-        
+
         // Get special circumstances - will be empty string or null if not provided
         const specialCircumstances = document.getElementById('specialCircumstances').value.trim() || null;
-        
+
         // Check if we have photos for sanitary inspection
         const needType = document.getElementById('needType').value;
         const photoInput = document.getElementById('photoEvidence');
         const hasPhotos = needType === 'sanitary-inspection' && photoInput.files.length > 0;
-        
+
         // Create FormData to handle both regular data and files
         const formData = new FormData();
         formData.append('citizenName', document.getElementById('citizenName').value);
@@ -350,7 +359,7 @@
         formData.append('vulnerabilityGroup', JSON.stringify(selectedVulnerabilities.length > 0 ? selectedVulnerabilities : ['none']));
         formData.append('specialCircumstances', specialCircumstances || '');
         formData.append('hasEvidence', hasPhotos);
-        
+
         // Add photo files if present
         if (hasPhotos) {
             const maxFiles = Math.min(photoInput.files.length, 3);
@@ -358,32 +367,98 @@
                 formData.append('photos', photoInput.files[i]);
             }
         }
-        
+
         console.log('Submitting form data...');
-        
+
         try {
             const response = await fetch('/api/requests', {
                 method: 'POST',
                 body: formData  // Send FormData instead of JSON
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
-                alert('Request submitted successfully! Redirecting to dashboard...');
-                window.location.href = '/citizen/dashboard';
+                showModal('Success', 'Request submitted successfully!', 'alert').then(() => {
+                    window.location.href = '/citizen/dashboard';
+                });
             } else {
-                alert('Error: ' + (data.error || 'Error submitting request. Please try again.'));
+                showModal('Error', 'Error: ' + (data.error || 'Error submitting request. Please try again.'), 'alert');
                 console.error('Server error:', data);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Network error submitting request. Please check your connection and try again.');
+            showModal('Network Error', 'Network error submitting request. Please check your connection and try again.', 'alert');
         }
     });
-    
+
+    // ==================== MODAL UTILITY ====================
+    function showModal(title, message, type = 'alert') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modalContent');
+
+            let buttons = '';
+            if (type === 'confirm') {
+                buttons = `
+                    <div class="flex gap-3 mt-6">
+                        <button id="modalCancel" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">Cancel</button>
+                        <button id="modalConfirm" class="flex-1 px-4 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">Confirm</button>
+                    </div>
+                `;
+            } else {
+                buttons = `
+                    <div class="flex justify-end mt-6">
+                        <button id="modalOk" class="px-6 py-2 bg-[#33272a] text-white rounded-lg hover:bg-[#594a4e] transition-colors font-semibold">OK</button>
+                    </div>
+                `;
+            }
+
+            modalContent.innerHTML = `
+                <h3 class="text-xl font-bold text-[#33272a] mb-4">${title}</h3>
+                <div class="text-gray-700 leading-relaxed">${message}</div>
+                ${buttons}
+            `;
+
+            modal.classList.remove('hidden');
+
+            if (type === 'confirm') {
+                document.getElementById('modalCancel').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(false);
+                };
+                document.getElementById('modalConfirm').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve(true);
+                };
+            } else {
+                document.getElementById('modalOk').onclick = () => {
+                    modal.classList.add('hidden');
+                    resolve();
+                };
+            }
+
+            // Close on background click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    resolve(type === 'confirm' ? false : undefined);
+                }
+            };
+
+            // Close on Escape
+            document.addEventListener('keydown', function escHandler(e) {
+                if (e.key === 'Escape') {
+                    modal.classList.add('hidden');
+                    document.removeEventListener('keydown', escHandler);
+                    resolve(type === 'confirm' ? false : undefined);
+                }
+            });
+        });
+    }
+
     // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
+    if (typeof lucide !== '') {
         lucide.createIcons();
     }
 </script>
