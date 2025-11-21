@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime
 from psycopg2.extras import RealDictCursor
-from werkzeug.utils import secure_filename
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 import smtplib
 import ssl
@@ -1031,11 +1030,21 @@ def admin_dashboard():
             staff_rows = cur.fetchall()
 
             for row in staff_rows:
+                # Parse permissions JSON if it's a string
+                permissions = row[12]
+                if isinstance(permissions, str):
+                    try:
+                        permissions = json.loads(permissions)
+                    except:
+                        permissions = {}
+                elif permissions is None:
+                    permissions = {}
+
                 staff_list.append({
                     'id': row[0],
                     'fullName': row[1],
                     'email': row[2],
-                    'phone': row[3],
+                    'phone': row[3] if row[3] else '',
                     'officialId': row[4],
                     'department': row[5],  # department_name from join
                     'role': row[6],
@@ -1044,7 +1053,7 @@ def admin_dashboard():
                     'status': row[9],
                     'joinedDate': row[10].isoformat() if row[10] else None,
                     'requestsHandled': row[11] or 0,
-                    'permissions': row[12] or {},
+                    'permissions': permissions,
                     'addedBy': row[13],
                     'addedDate': row[14].strftime('%m/%d/%Y') if row[14] else None
                 })
@@ -1086,6 +1095,8 @@ def admin_dashboard():
             cur.close()
         except Exception as e:
             print(f"Database error: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
             conn.close()
     else:
@@ -1111,7 +1122,6 @@ def admin_dashboard():
                            staff_list=staff_list,
                            recent_audits=recent_audits,
                            stats=admin_stats)
-
 
 # API Routes
 @app.route('/api/login', methods=['POST'])
@@ -2065,14 +2075,16 @@ def api_update_staff(staff_id):
             update_fields.append("status = %s")
             params.append(data['status'])
         if 'permissions' in data:
-            update_fields.append("permissions = %s")
-            params.append(json.dumps(data['permissions']))
+            # Ensure permissions is properly formatted as JSON
+            permissions_json = json.dumps(data['permissions']) if isinstance(data['permissions'], dict) else data['permissions']
+            update_fields.append("permissions = %s::jsonb")
+            params.append(permissions_json)
 
         if not update_fields:
             return jsonify({'success': False, 'error': 'No fields to update'}), 400
 
         params.append(staff_id)
-        query = f"UPDATE staff SET {', '.join(update_fields)} WHERE staff_id = %s RETURNING staff_id, full_name, email, phone, official_id, role, user_role, employee_id, status"
+        query = f"UPDATE staff SET {', '.join(update_fields)} WHERE staff_id = %s RETURNING staff_id, full_name, email, phone, official_id, role, user_role, employee_id, status, permissions"
 
         cur.execute(query, params)
         row = cur.fetchone()
@@ -2089,6 +2101,14 @@ def api_update_staff(staff_id):
         dept_row = cur.fetchone()
         dept_name = dept_row[0] if dept_row else None
 
+        # Parse permissions if it exists
+        permissions = {}
+        if len(row) > 9 and row[9]:
+            try:
+                permissions = json.loads(row[9]) if isinstance(row[9], str) else row[9]
+            except:
+                permissions = row[9] if isinstance(row[9], dict) else {}
+
         updated_staff = {
             'id': row[0],
             'fullName': row[1],
@@ -2099,7 +2119,8 @@ def api_update_staff(staff_id):
             'role': row[5],
             'userRole': row[6],
             'employeeId': row[7],
-            'status': row[8]
+            'status': row[8],
+            'permissions': permissions
         }
 
         # Log audit action
@@ -2585,6 +2606,49 @@ We look forward to seeing you!
             conn.close()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/professional/complete_appointment', methods=['POST'])
+def complete_appointment():
+    """Professional marks an appointment as completed - Simple version"""
+    if 'user_email' not in session or not session.get('is_professional'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    appointment_id = data.get('appointment_id')
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Database connection failed'}), 500
+
+    try:
+        cur = conn.cursor()
+
+        # Verify appointment belongs to this professional
+        cur.execute("""
+            UPDATE appointments
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+            WHERE appointment_id = %s 
+            AND professional_id = (SELECT professional_id FROM professionals WHERE email = %s)
+            AND status = 'confirmed'
+        """, (appointment_id, session['user_email']))
+
+        if cur.rowcount == 0:
+            return jsonify({'success': False, 'error': 'Appointment not found or not confirmed'}), 404
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Appointment marked as completed successfully'
+        })
+
+    except Exception as e:
+        print(f"Error completing appointment: {e}")
+        if conn:
+            conn.rollback()
+            conn.close()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ============================================
 # MENTAL HEALTH WORKFLOW - STAFF
@@ -2788,13 +2852,15 @@ def list_professionals():
         cur = conn.cursor()
 
         # Build query with optional profession_type filter and department join
+        # USING SMART SORTING: Show all professionals with status-based ordering
         query = """
             SELECT p.professional_id, p.full_name, p.email, p.phone, p.profession_type,
                    p.specialization, d.department_name, p.license_number, p.years_of_experience, 
-                   p.status, p.max_appointments_per_day, p.total_appointments
+                   p.status, p.max_appointments_per_day, p.total_appointments,
+                   p.joined_date  -- Added for sorting
             FROM professionals p
             LEFT JOIN departments d ON p.department_id = d.department_id
-            WHERE p.status = 'active'
+            WHERE 1=1  -- Removed status filter to show all professionals
         """
         params = []
 
@@ -2802,7 +2868,17 @@ def list_professionals():
             query += " AND p.profession_type = %s"
             params.append(profession_type)
 
-        query += " ORDER BY p.full_name"
+        # Add smart sorting: active professionals first, then on-leave, then others
+        query += """
+            ORDER BY 
+                CASE p.status 
+                    WHEN 'active' THEN 1 
+                    WHEN 'on-leave' THEN 2 
+                    ELSE 3 
+                END,
+                p.joined_date DESC,
+                p.full_name
+        """
 
         cur.execute(query, params)
 
@@ -2818,9 +2894,10 @@ def list_professionals():
                 'department': row[6],
                 'license_number': row[7],
                 'years_of_experience': row[8],
-                'status': row[9],
+                'status': row[9],  # This will now show all statuses
                 'max_appointments_per_day': row[10],
-                'total_appointments': row[11]
+                'total_appointments': row[11],
+                'joined_date': row[12].isoformat() if row[12] else None
             })
 
         cur.close()
@@ -2833,8 +2910,7 @@ def list_professionals():
         if conn:
             conn.close()
         return jsonify({'success': False, 'error': str(e)}), 500
-
-
+        
 # Add new endpoint for specialization options
 @app.route('/api/specialization-options', methods=['GET'])
 def get_specialization_options():
@@ -2871,7 +2947,7 @@ def admin_list_professionals():
         cur.execute("""
             SELECT professional_id, full_name, email, phone, license_number,
                    specialization, qualifications, years_of_experience, status,
-                   max_appointments_per_day, total_appointments, joined_date
+                   max_appointments_per_day, total_appointments, joined_date, profession_type
             FROM professionals
             ORDER BY joined_date DESC
         """)
@@ -2890,7 +2966,8 @@ def admin_list_professionals():
                 'status': row[8],
                 'max_appointments_per_day': row[9],
                 'total_appointments': row[10],
-                'joined_date': row[11].isoformat() if row[11] else None
+                'joined_date': row[11].isoformat() if row[11] else None,
+                'profession_type': row[12]  # Added profession_type
             })
 
         cur.close()
@@ -3045,6 +3122,10 @@ def admin_update_professional(professional_id):
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
 
     data = request.get_json()
+    
+    # logging
+    print(f"DEBUG: Updating professional {professional_id}")
+    print(f"DEBUG: Data received: {data}")
 
     conn = get_db_connection()
     if not conn:
@@ -3056,25 +3137,34 @@ def admin_update_professional(professional_id):
         # Build update query dynamically
         update_fields = []
         values = []
-
-        allowed_fields = ['full_name', 'email', 'phone', 'license_number', 'specialization',
-                          'qualifications', 'years_of_experience', 'max_appointments_per_day', 'status']
-
-        for field in allowed_fields:
-            if field in data:
-                update_fields.append(f"{field} = %s")
+        
+        field_mapping = {
+            'full_name': 'full_name',
+            'email': 'email',
+            'phone': 'phone',
+            'license_number': 'license_number',
+            'profession_type': 'profession_type',
+            'specialization': 'specialization',
+            'qualifications': 'qualifications',
+            'years_of_experience': 'years_of_experience',
+            'max_appointments_per_day': 'max_appointments_per_day',
+            'status': 'status'
+        }
+        
+        for field in field_mapping:
+            if field in data and data[field] is not None:
+                update_fields.append(f"{field_mapping[field]} = %s")
                 values.append(data[field])
-
+          
         if not update_fields:
             return jsonify({'status': 'error', 'message': 'No fields to update'}), 400
 
         values.append(professional_id)
-
         query = f"""
             UPDATE professionals
             SET {', '.join(update_fields)}
             WHERE professional_id = %s
-            RETURNING full_name
+            RETURNING professional_id, full_name, email
         """
 
         cur.execute(query, values)
@@ -3085,35 +3175,49 @@ def admin_update_professional(professional_id):
             conn.close()
             return jsonify({'status': 'error', 'message': 'Professional not found'}), 404
 
+        # Get basic info for audit log
+        professional_id, full_name, email = result
+
+        # Log audit action properly
+        admin_email = session.get('user_email', 'system')
+        cur.execute("""
+            INSERT INTO audit_logs (
+                audit_code, action_type, user_email, user_role, 
+                entity_type, entity_id, details, ip_address
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            f"AUDIT-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            'UPDATE',
+            admin_email,
+            'admin',
+            'PROFESSIONAL',
+            professional_id,
+            f"Updated professional: {full_name} ({email})",
+            request.remote_addr
+        ))
+
         conn.commit()
-
-        # Log audit
-        log_audit_action(
-            user_id=session.get('user_id'),
-            user_email=session.get('user_email'),
-            action_type='UPDATE',
-            entity_type='professional',
-            entity_id=professional_id,
-            details=f"Updated professional: {result[0]}",
-            ip_address=request.remote_addr
-        )
-
         cur.close()
         conn.close()
 
-        return jsonify({'status': 'success', 'message': 'Professional updated successfully'})
+        return jsonify({
+            'status': 'success', 
+            'message': 'Professional updated successfully'
+        })
 
     except Exception as e:
         print(f"Error updating professional: {e}")
+        import traceback
+        traceback.print_exc()
         if conn:
             conn.rollback()
             conn.close()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
 @app.route('/api/admin/professionals/<professional_id>', methods=['DELETE'])
 def admin_delete_professional(professional_id):
-    """Delete a professional from the system"""
+    """Soft delete - set status to 'inactive' - FIXED VERSION"""
     if session.get('user_role') != 'admin':
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
 
@@ -3124,9 +3228,9 @@ def admin_delete_professional(professional_id):
     try:
         cur = conn.cursor()
 
-        # Get professional details before deletion for audit log
+        # Get professional details before soft delete
         cur.execute("""
-            SELECT full_name, email
+            SELECT full_name, email, status, profession_type
             FROM professionals
             WHERE professional_id = %s
         """, (professional_id,))
@@ -3138,37 +3242,61 @@ def admin_delete_professional(professional_id):
             conn.close()
             return jsonify({'status': 'error', 'message': 'Professional not found'}), 404
 
-        # Delete the professional
+        full_name, email, current_status, profession_type = professional
+
+        # SOFT DELETE: Update status to 'inactive' instead of deleting
         cur.execute("""
-            DELETE FROM professionals
+            UPDATE professionals
+            SET status = 'inactive'
             WHERE professional_id = %s
         """, (professional_id,))
+        
+        # Log audit action
+        admin_email = session.get('user_email', 'system')
+        cur.execute("""
+            INSERT INTO audit_logs (audit_code, action_type, user_email, user_role, 
+                                    entity_type, entity_id, details, ip_address)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            f"AUDIT-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            'DELETE',
+            admin_email,
+            'admin',
+            'PROFESSIONAL',
+            professional_id,
+            f"Soft deleted professional: {full_name} ({email}) - Status changed from '{current_status}' to 'inactive' - Profession: {profession_type}",
+            request.remote_addr
+        ))
 
         conn.commit()
-
-        # Log audit
-        log_audit_action(
-            user_id=session.get('user_id'),
-            user_email=session.get('user_email'),
-            action_type='DELETE',
-            entity_type='professional',
-            entity_id=professional_id,
-            details=f"Deleted professional {professional[0]} ({professional[1]})",
-            ip_address=request.remote_addr
-        )
-
         cur.close()
         conn.close()
 
-        return jsonify({'status': 'success', 'message': 'Professional deleted successfully'})
+        print(f"DEBUG: Professional {professional_id} soft deleted (status set to inactive)")
+        return jsonify({'status': 'success', 'message': 'Professional status set to inactive'})
 
     except Exception as e:
-        print(f"Error deleting professional: {e}")
+        print(f"ERROR: Error soft deleting professional: {e}")
+        import traceback
+        traceback.print_exc()
         if conn:
             conn.rollback()
             conn.close()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+# ============================================
+# HELPER FUNCTION FOR GETTING USER ROLE FROM PROFESSION
+# ============================================
 
+def get_user_role_from_profession(profession_type):
+    """Map profession_type to user_role in role_permissions table"""
+    mapping = {
+        'medical-doctor': 'medical_doctor',
+        'dentist': 'dentist',
+        'immunization-doctor': 'immunization_doctor',
+        'mental-health-doctor': 'mental_health_doctor',
+        'medical-technologist': 'medical_technologist'
+    }
+    return mapping.get(profession_type, 'officer')
 
 # ============================================
 # NOTIFICATIONS
